@@ -1,10 +1,9 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../config/database.js";
-import FormaPagamento from "./formaPagamentoModels.js";
 
 const Pedido = sequelize.define('Pedido',{
     produtosPedido:{
-        type: DataTypes.ARRAY,
+        type: DataTypes.STRING,
         allowNull: false
     },
     valorPedido: {
@@ -14,7 +13,7 @@ const Pedido = sequelize.define('Pedido',{
     formaPagamento_id: {
         type: DataTypes.INTEGER,
         references:{
-            model: FormaPagamento,
+            model: 'FormaPagamento',
             key: 'id'
         },
         allowNull: false
@@ -35,7 +34,5 @@ const Pedido = sequelize.define('Pedido',{
     tableName:'produtos',
     timestamps: true
 })
-
-FormaPagamento.belongsTo(Pedido,{foreignKey:'formaPagamento_id'})
 
 export default Pedido

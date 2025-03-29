@@ -1,7 +1,16 @@
 import pedidoController from "../controller/pedidoController.js";
 import express from 'express'
+import session from 'express-session'
 
 const pedidoRoutes = express.Router()
+
+//definindo o middleware de sessao das rotas
+pedidoRoutes.use(session({
+    secret: 'mySecret', // Chave secreta para assinar o cookie da sessão
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false } // Defina como true se estiver usando HTTPS
+}));
 
 //rota para cadastrar pedido
 pedidoRoutes.post('/pedido', async (req,res) => {

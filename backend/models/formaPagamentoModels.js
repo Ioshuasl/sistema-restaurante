@@ -12,6 +12,4 @@ const FormaPagamento = sequelize.define('FormaPagamento',{
     timestamps: true
 })
 
-FormaPagamento.hasMany(Pedido, {foreignKey:'formaPagamento_id'})
-
 export default FormaPagamento

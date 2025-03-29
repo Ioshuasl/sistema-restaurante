@@ -1,9 +1,20 @@
 import categoriaProdutoController from "../controller/categoriaProdutoController.js";
 import express from 'express'
+import session from 'express-session'
+import { userLogged,isAdmin } from '../validators/isAdmin.js'
 
 const categoriaProdutoRoutes = express.Router()
 
-categoriaProdutoRoutes.post('/categoriaProduto', async (req,res) => {
+//definindo o middleware de sessao das rotas
+categoriaProdutoRoutes.use(session({
+    secret: 'mySecret', // Chave secreta para assinar o cookie da sessão
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false } // Defina como true se estiver usando HTTPS
+}));
+
+//rota para cadastrar categoria de produto
+categoriaProdutoRoutes.post('/categoriaProduto',userLogged, isAdmin, async (req,res) => {
     const {nomeCategoriaProduto} = req.body
 
     try {
@@ -14,6 +25,7 @@ categoriaProdutoRoutes.post('/categoriaProduto', async (req,res) => {
     }
 })
 
+//rota para encontrar todas as categorias de produtos cadastrados na aplicacao
 categoriaProdutoRoutes.get('/categoriaProduto', async (req,res) => {
     try {
         const categoriaProdutos = await categoriaProdutoController.findAndCountAllCategoriaprodutos()
@@ -23,7 +35,21 @@ categoriaProdutoRoutes.get('/categoriaProduto', async (req,res) => {
     }
 })
 
-categoriaProdutoRoutes.put('/categoriaProduto/:id', async (req,res) => {
+//rota para encontrar categoria de produto pelo id
+categoriaProdutoRoutes.get('/categoriaProduto/:id', async (req,res) => {
+    const {id} = req.params
+    
+    try {
+        const categoriaProduto = await categoriaProdutoController.findCategoriaProduto(id)
+        return res.status(200).json(categoriaProduto)
+    } catch (error) {
+        console.error(error)
+        return error
+    }
+})  
+
+//rota para atualizar uma categoria de produto
+categoriaProdutoRoutes.put('/categoriaProduto/:id',userLogged, isAdmin, async (req,res) => {
     const {id} = req.params
     const updatedData = req.body
 
@@ -35,7 +61,8 @@ categoriaProdutoRoutes.put('/categoriaProduto/:id', async (req,res) => {
     }
 })
 
-categoriaProdutoRoutes.delete('/categoriaProduto/:id', async (req,res) => {
+//rota para deletar uma categoria de produto
+categoriaProdutoRoutes.delete('/categoriaProduto/:id', userLogged, isAdmin,async (req,res) => {
     const {id} = req.params
 
     try {

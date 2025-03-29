@@ -8,6 +8,4 @@ const CategoriaProduto = sequelize.define('CategoriaProduto',{
     }
 })
 
-CategoriaProduto.hasMany(Produto,{foreignKey:'categoriaProduto_id'})
-
 export default CategoriaProduto

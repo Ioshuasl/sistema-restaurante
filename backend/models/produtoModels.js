@@ -26,6 +26,4 @@ const Produto = sequelize.define('Produto',{
     timestamps: true
 })
 
-Produto.belongsTo(CategoriaProduto, {foreignKey:'categoriaProduto_id'})
-
 export default Produto

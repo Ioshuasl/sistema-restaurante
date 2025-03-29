@@ -1,10 +1,20 @@
 import formaPagamentoController from "../controller/formaPagamentoController.js";
 import express from "express";
+import session from 'express-session'
+import { userLogged,isAdmin } from '../validators/isAdmin.js'
 
 const formaPagamentoRoutes = express.Router()
 
+//definindo o middleware de sessao das rotas
+formaPagamentoRoutes.use(session({
+    secret: 'mySecret', // Chave secreta para assinar o cookie da sessão
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false } // Defina como true se estiver usando HTTPS
+}));
+
 //rota para cadastrar forma de pagamento
-formaPagamentoRoutes.post('/formaPagamento', async (req,res) => {
+formaPagamentoRoutes.post('/formaPagamento', userLogged, isAdmin, async (req,res) => {
     const {nomeFormaPagamento} = req.body
 
     try {
@@ -27,7 +37,7 @@ formaPagamentoRoutes.get('/formaPagamento', async (req,res) => {
 })
 
 //rota para atualizar uma forma de pagamento
-formaPagamentoRoutes.put('/formaPagamento/:id', async (req,res) =>{
+formaPagamentoRoutes.put('/formaPagamento/:id', userLogged, isAdmin, async (req,res) =>{
     const {id} = req.params
     const updatedData = req.body
 
@@ -40,7 +50,7 @@ formaPagamentoRoutes.put('/formaPagamento/:id', async (req,res) =>{
 })
 
 //rota para deletar uma forma de pagamento
-formaPagamentoRoutes.delete('/formaPagamento/:id', async (req,res) =>{
+formaPagamentoRoutes.delete('/formaPagamento/:id', userLogged, isAdmin, async (req,res) =>{
     const {id} = req.params
 
     try {

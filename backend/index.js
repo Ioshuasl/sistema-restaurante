@@ -4,6 +4,7 @@ import produtoRoutes from "./routes/produtoRoutes.js"
 import categoriaProdutoRoutes from "./routes/categoriaProdutoRoutes.js"
 import formaPagamentoRoutes from "./routes/formaPagamentoRoutes.js"
 import pedidoRoutes from "./routes/pedidoRoutes.js"
+import userRoutes from "./routes/userRoutes.js"
 
 const app = express()
 const PORT = 3300
@@ -13,6 +14,7 @@ app.use('/api', produtoRoutes)
 app.use('/api',categoriaProdutoRoutes)
 app.use('/api',formaPagamentoRoutes)
 app.use('/api',pedidoRoutes)
+app.use('/api',userRoutes)
 
 try {
     await sequelize.authenticate(); //verifica a conexão com o banco de dados

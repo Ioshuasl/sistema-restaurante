@@ -1,12 +1,16 @@
 import FormaPagamento from "../models/formaPagamentoModels.js"
+import Pedido from "../models/pedidoModels.js"
+
+Pedido.belongsTo(FormaPagamento, {foreignKey:'formaPagamento_id'})
+FormaPagamento.hasMany(Pedido, {foreignKey:'formaPagamento_id'})
 
 class FormaPagamentoController{
     async createFormaPagamento(nomeFormaPagamento){
         try {
             const formaPagamento = FormaPagamento.create(nomeFormaPagamento)
-            return formaPagamento
+            return {message:"Forma de pagamento criado com sucesso", formaPagamento}
         } catch (error) {
-            return error
+            return {message: "Erro ao tentar executar a função",error}
         }
     }
 
@@ -15,7 +19,7 @@ class FormaPagamentoController{
             const formaPagamentos = FormaPagamento.findAll()
             return formaPagamentos
         } catch (error) {
-            return error
+            return {message: "Erro ao tentar executar a função",error}
         }
     }
 
@@ -26,9 +30,9 @@ class FormaPagamentoController{
                     id:id
                 }
             })
-            return formaPagamento
+            return {message:"Forma de pagamento atualizado com sucesso", formaPagamento}
         } catch (error) {
-            return error
+            return {message: "Erro ao tentar executar a função",error}
         }
     }
 
@@ -39,9 +43,9 @@ class FormaPagamentoController{
                     id:id
                 }
             })
-            return formaPagamento
+            return {message:"Forma de pagamento excluído com sucesso", formaPagamento}
         } catch (error) {
-            return error
+            return {message: "Erro ao tentar executar a função",error}
         }
     }
 }
