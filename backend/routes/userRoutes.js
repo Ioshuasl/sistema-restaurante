@@ -2,8 +2,12 @@ import session from "express-session";
 import userController from "../controller/userController.js";
 import express from 'express'
 import { isAdmin, userLogged } from "../validators/validator.js";
+import cors from "cors"
 
 const userRoutes = express.Router()
+
+//usando o middleware do cors para habilitar os recursos do dominio da pagina web
+userRoutes.use(cors())
 
 //definindo o middleware de sessao das rotas
 userRoutes.use(session({

@@ -2,8 +2,12 @@ import categoriaProdutoController from "../controller/categoriaProdutoController
 import express from 'express'
 import session from 'express-session'
 import { userLogged,isAdmin } from '../validators/validator.js'
+import cors from "cors"
 
 const categoriaProdutoRoutes = express.Router()
+
+//usando o middleware do cors para habilitar os recursos do dominio da pagina web
+categoriaProdutoRoutes.use(cors())
 
 //definindo o middleware de sessao das rotas
 categoriaProdutoRoutes.use(session({

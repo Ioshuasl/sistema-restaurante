@@ -3,7 +3,7 @@ import sequelize from "../config/database.js";
 
 const Pedido = sequelize.define('Pedido',{
     produtosPedido:{
-        type: DataTypes.STRING,
+        type: DataTypes.JSONB,
         allowNull: false
     },
     valorPedido: {

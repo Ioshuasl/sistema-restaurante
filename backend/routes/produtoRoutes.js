@@ -2,8 +2,12 @@ import produtoController from '../controller/produtoController.js'
 import express from 'express'
 import session from 'express-session'
 import { userLogged,isAdmin } from '../validators/validator.js'
+import cors from "cors"
 
 const produtoRoutes = express.Router()
+
+//usando o middleware do cors para habilitar os recursos do dominio da pagina web
+produtoRoutes.use(cors())
 
 //definindo o middleware de sessao das rotas
 produtoRoutes.use(session({
@@ -30,7 +34,7 @@ produtoRoutes.post('/produto', userLogged, isAdmin, async (req,res) => {
 
 
 //rota para encontrar todos os produtos
-produtoRoutes.get('/produtos/count', async (req,res) => {
+produtoRoutes.get('/produto', async (req,res) => {
     try {
         const produtos = await produtoController.findAndCountAllProdutos()
         return res.status(200).json(produtos)

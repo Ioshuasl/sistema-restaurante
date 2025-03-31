@@ -5,11 +5,17 @@ import categoriaProdutoRoutes from "./routes/categoriaProdutoRoutes.js"
 import formaPagamentoRoutes from "./routes/formaPagamentoRoutes.js"
 import pedidoRoutes from "./routes/pedidoRoutes.js"
 import userRoutes from "./routes/userRoutes.js"
+import cors from "cors"
 
 const app = express()
 const PORT = 3300
 
+//middleware para processar corpos de requisicao json
 app.use(express.json())
+
+//usando o middleware do cors para habilitar os recursos do dominio da pagina web
+app.use(cors())
+
 app.use('/api', produtoRoutes)
 app.use('/api',categoriaProdutoRoutes)
 app.use('/api',formaPagamentoRoutes)
