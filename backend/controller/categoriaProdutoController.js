@@ -5,6 +5,8 @@ Produto.belongsTo(CategoriaProduto, {foreignKey:'categoriaProduto_id'})
 CategoriaProduto.hasMany(Produto,{foreignKey:'categoriaProduto_id'})
 
 class CategoriaProdutoController{
+
+    //funcao para criar categoria de produto
     async createCategoriaProduto(nomeCategoriaProduto){
         try {
             const categoriaProduto = await CategoriaProduto.create(nomeCategoriaProduto)
@@ -14,9 +16,10 @@ class CategoriaProdutoController{
         }
     }
 
-    async findAndCountAllCategoriaprodutos(){
+    //funcao para encontrar todas as categorias de produto cadastrado na aplicacao
+    async findAllCategoriaProdutos(){
         try {
-            const categoriaProdutos = await CategoriaProduto.findAndCountAll({
+            const categoriaProdutos = await CategoriaProduto.findAll({
                 include:{
                     model:Produto
                 }
@@ -27,6 +30,7 @@ class CategoriaProdutoController{
         }
     }
 
+    //funcao para encontrar categoria de produto a partir do ID
     async findCategoriaProduto(id) {
         try {
             const categoriaProduto = await CategoriaProduto.findByPk(id)
@@ -36,6 +40,8 @@ class CategoriaProdutoController{
             return error
         }
     }
+
+    //funcao para atualizar categoria de produto
     async updateCategoriaProduto(id, updatedata){
         try {
             const categoriaProduto = await CategoriaProduto.update(updatedata, {
@@ -47,6 +53,7 @@ class CategoriaProdutoController{
         }
     }
 
+    //funcao para deletar categoria de produto
     async deleteCategoriaProduto(id){
         try {
             const categoriaProduto = await CategoriaProduto.destroy({

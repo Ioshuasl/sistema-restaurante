@@ -1,7 +1,7 @@
 import session from "express-session";
 import userController from "../controller/userController.js";
 import express from 'express'
-import { isAdmin, userLogged } from "../validators/isAdmin.js";
+import { isAdmin, userLogged } from "../validators/validator.js";
 
 const userRoutes = express.Router()
 
@@ -109,6 +109,10 @@ userRoutes.put('/user/:id', userLogged, isAdmin, async (req,res) => {
 //Rota para deletar um usuáro
 userRoutes.delete('/user/:id', userLogged, isAdmin, async (req,res) => {
     const {id} = req.params
+
+    if (id === req.session.user.id){
+        return res.status(400).send("Voce nao pode se excluir")
+    }
 
     try {
         const user = await userController.deleteUser(id)

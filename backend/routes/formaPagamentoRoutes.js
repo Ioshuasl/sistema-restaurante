@@ -1,7 +1,7 @@
 import formaPagamentoController from "../controller/formaPagamentoController.js";
 import express from "express";
 import session from 'express-session'
-import { userLogged,isAdmin } from '../validators/isAdmin.js'
+import { userLogged,isAdmin } from '../validators/validator.js'
 
 const formaPagamentoRoutes = express.Router()
 

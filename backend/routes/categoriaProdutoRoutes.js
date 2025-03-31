@@ -1,7 +1,7 @@
 import categoriaProdutoController from "../controller/categoriaProdutoController.js";
 import express from 'express'
 import session from 'express-session'
-import { userLogged,isAdmin } from '../validators/isAdmin.js'
+import { userLogged,isAdmin } from '../validators/validator.js'
 
 const categoriaProdutoRoutes = express.Router()
 
@@ -28,7 +28,7 @@ categoriaProdutoRoutes.post('/categoriaProduto',userLogged, isAdmin, async (req,
 //rota para encontrar todas as categorias de produtos cadastrados na aplicacao
 categoriaProdutoRoutes.get('/categoriaProduto', async (req,res) => {
     try {
-        const categoriaProdutos = await categoriaProdutoController.findAndCountAllCategoriaprodutos()
+        const categoriaProdutos = await categoriaProdutoController.findAllCategoriaProdutos()
         return res.status(200).json(categoriaProdutos)
     } catch (error) {
         return res.status(400).send(error)

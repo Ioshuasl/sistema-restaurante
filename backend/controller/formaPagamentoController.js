@@ -5,6 +5,8 @@ Pedido.belongsTo(FormaPagamento, {foreignKey:'formaPagamento_id'})
 FormaPagamento.hasMany(Pedido, {foreignKey:'formaPagamento_id'})
 
 class FormaPagamentoController{
+
+    //funcao para criar forma de pagamento
     async createFormaPagamento(nomeFormaPagamento){
         try {
             const formaPagamento = FormaPagamento.create(nomeFormaPagamento)
@@ -14,6 +16,7 @@ class FormaPagamentoController{
         }
     }
 
+    //funcao para encontrar todas as formas de pagamento
     async findAllFormaPagamento(){
         try {
             const formaPagamentos = FormaPagamento.findAll()
@@ -23,6 +26,7 @@ class FormaPagamentoController{
         }
     }
 
+    //funcao para atualizar forma de pagamento
     async updateFormaPagamento(id,updatedData){
         try {
             const formaPagamento = FormaPagamento.update(updatedData, {
@@ -36,6 +40,7 @@ class FormaPagamentoController{
         }
     }
 
+    //funcao para deletar forma de pagamento
     async deleteFormaPagamento(id){
         try {
             const formaPagamento = FormaPagamento.destroy({

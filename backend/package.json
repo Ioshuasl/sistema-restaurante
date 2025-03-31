@@ -1,12 +1,16 @@
 {
-  "name": "welsongay",
+  "name": "sistema-restaurante",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "type": "module",
-  "author": "",
+  "author": "Ioshua Souza Lopes",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Ioshuasl/sistema-restaurante.git"
+  },
   "license": "ISC",
   "description": "",
   "dependencies": {
