@@ -9,7 +9,7 @@ class FormaPagamentoController{
     //funcao para criar forma de pagamento
     async createFormaPagamento(nomeFormaPagamento){
         try {
-            const formaPagamento = FormaPagamento.create(nomeFormaPagamento)
+            const formaPagamento = await FormaPagamento.create({nomeFormaPagamento})
             return {message:"Forma de pagamento criado com sucesso", formaPagamento}
         } catch (error) {
             return {message: "Erro ao tentar executar a função",error}
@@ -19,7 +19,7 @@ class FormaPagamentoController{
     //funcao para encontrar todas as formas de pagamento
     async findAllFormaPagamento(){
         try {
-            const formaPagamentos = FormaPagamento.findAll()
+            const formaPagamentos = await FormaPagamento.findAll()
             return formaPagamentos
         } catch (error) {
             return {message: "Erro ao tentar executar a função",error}
@@ -29,7 +29,7 @@ class FormaPagamentoController{
     //funcao para atualizar forma de pagamento
     async updateFormaPagamento(id,updatedData){
         try {
-            const formaPagamento = FormaPagamento.update(updatedData, {
+            const formaPagamento = await FormaPagamento.update(updatedData, {
                 where:{
                     id:id
                 }
@@ -43,7 +43,7 @@ class FormaPagamentoController{
     //funcao para deletar forma de pagamento
     async deleteFormaPagamento(id){
         try {
-            const formaPagamento = FormaPagamento.destroy({
+            const formaPagamento = await FormaPagamento.destroy({
                 where:{
                     id:id
                 }

@@ -1,32 +1,34 @@
 import CategoriaProduto from "../models/categoriaProdutoModels.js"
 import Produto from "../models/produtoModels.js"
 
-Produto.belongsTo(CategoriaProduto, {foreignKey:'categoriaProduto_id'})
-CategoriaProduto.hasMany(Produto,{foreignKey:'categoriaProduto_id'})
+Produto.belongsTo(CategoriaProduto, { foreignKey: 'categoriaProduto_id' })
+CategoriaProduto.hasMany(Produto, { foreignKey: 'categoriaProduto_id' })
 
-class CategoriaProdutoController{
+class CategoriaProdutoController {
 
     //funcao para criar categoria de produto
-    async createCategoriaProduto(nomeCategoriaProduto){
+    async createCategoriaProduto(nomeCategoriaProduto) {
         try {
-            const categoriaProduto = await CategoriaProduto.create(nomeCategoriaProduto)
-            return {message:"Categoria de produto criado com sucesso",categoriaProduto}
+            const categoriaProduto = await CategoriaProduto.create({nomeCategoriaProduto})
+            return { message: "Categoria de produto criado com sucesso", categoriaProduto }
         } catch (error) {
-            return {message: "Erro ao tentar executar a função",error}
+            console.error(error)
+            return { message: "Erro ao tentar executar a função", error }
         }
     }
 
     //funcao para encontrar todas as categorias de produto cadastrado na aplicacao
-    async findAllCategoriaProdutos(){
+    async findAllCategoriaProdutos() {
         try {
             const categoriaProdutos = await CategoriaProduto.findAll({
-                include:{
-                    model:Produto
+                include: {
+                    model: Produto
                 }
             })
             return categoriaProdutos
         } catch (error) {
-            return {message: "Erro ao tentar executar a função",error}
+            console.error(error)
+            return { message: "Erro ao tentar executar a função", error }
         }
     }
 
@@ -42,26 +44,28 @@ class CategoriaProdutoController{
     }
 
     //funcao para atualizar categoria de produto
-    async updateCategoriaProduto(id, updatedata){
+    async updateCategoriaProduto(id, updatedata) {
         try {
             const categoriaProduto = await CategoriaProduto.update(updatedata, {
-                where: {id:id}
+                where: { id: id }
             })
-            return {message:"Categoria de produto atualizado com sucesso", categoriaProduto}
+            return { message: "Categoria de produto atualizado com sucesso", categoriaProduto }
         } catch (error) {
-            return {message: "Erro ao tentar executar a função",error}
+            console.error(error)
+            return { message: "Erro ao tentar executar a função", error }
         }
     }
 
     //funcao para deletar categoria de produto
-    async deleteCategoriaProduto(id){
+    async deleteCategoriaProduto(id) {
         try {
             const categoriaProduto = await CategoriaProduto.destroy({
-                where: {id: id}
+                where: { id: id }
             })
-            return {message:"Categoria de produto excluído com sucesso", categoriaProduto}
+            return { message: "Categoria de produto excluído com sucesso", categoriaProduto }
         } catch (error) {
-            return {message: "Erro ao tentar executar a função",error}
+            console.error(error)
+            return { message: "Erro ao tentar executar a função", error }
         }
     }
 }

@@ -1,19 +1,22 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../config/database.js";
+import FormaPagamento from "./formaPagamentoModels.js";
 
-const Pedido = sequelize.define('Pedido',{
-    produtosPedido:{
-        type: DataTypes.JSONB,
+const Pedido = sequelize.define('pedidos', {
+    id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
         allowNull: false
     },
-    valorPedido: {
-        type: DataTypes.FLOAT,
+    valorTotalPedido: {
+        type: DataTypes.DECIMAL(10, 2), // DECIMAL é mais preciso para valores monetários que FLOAT.
         allowNull: false
     },
     formaPagamento_id: {
         type: DataTypes.INTEGER,
-        references:{
-            model: 'FormaPagamento',
+        references: {
+            model: FormaPagamento, // Garanta que 'FormaPagamento' é o nome da tabela correto.
             key: 'id'
         },
         allowNull: false
@@ -22,17 +25,19 @@ const Pedido = sequelize.define('Pedido',{
         type: DataTypes.BOOLEAN,
         allowNull: false
     },
-    nomeCliente:{
+    nomeCliente: {
         type: DataTypes.STRING,
         allowNull: false
     },
+    // Opcional: O endereço só é obrigatório se não for para retirada no estabelecimento.
     enderecoCliente: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: true // Pode ser nulo se isRetiradaEstabelecimento for true.
     }
-},{
-    tableName:'produtos',
+}, {
+    // CORREÇÃO CRÍTICA: O nome da tabela foi corrigido.
+    tableName: 'pedidos',
     timestamps: true
-})
+});
 
-export default Pedido
+export default Pedido;

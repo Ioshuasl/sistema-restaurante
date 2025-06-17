@@ -1,14 +1,20 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../config/database.js";
-import CategoriaProduto from "./categoriaProdutoModels.js";
+import CategoriaProduto from '../models/categoriaProdutoModels.js'
 
-const Produto = sequelize.define('Produto',{
+const Produto = sequelize.define('produtos',{
+    id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+        allowNull: false
+    },
     nomeProduto: {
         type: DataTypes.STRING,
         allowNull:false
     },
     valorProduto: {
-        type: DataTypes.FLOAT,
+        type: DataTypes.DECIMAL(10, 2),
         allowNull: false
     },
     isAtivo: {
@@ -22,7 +28,7 @@ const Produto = sequelize.define('Produto',{
         }
     }
 },{
-    tableName: 'Produtos',
+    tableName: 'produtos',
     timestamps: true
 })
 

@@ -4,7 +4,7 @@ import session from 'express-session'
 const validator = express()
 
 validator.use(session({
-    secret: 'mySecret', // Substitua por um segredo seguro
+    secret: 'mySecret',
     resave: false,
     saveUninitialized: true,
     cookie: { secure: false } // Defina como true se estiver usando HTTPS

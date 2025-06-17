@@ -9,14 +9,6 @@ const categoriaProdutoRoutes = express.Router()
 //usando o middleware do cors para habilitar os recursos do dominio da pagina web
 categoriaProdutoRoutes.use(cors())
 
-//definindo o middleware de sessao das rotas
-categoriaProdutoRoutes.use(session({
-    secret: 'mySecret', // Chave secreta para assinar o cookie da sessão
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false } // Defina como true se estiver usando HTTPS
-}));
-
 //rota para cadastrar categoria de produto
 categoriaProdutoRoutes.post('/categoriaProduto',userLogged, isAdmin, async (req,res) => {
     const {nomeCategoriaProduto} = req.body

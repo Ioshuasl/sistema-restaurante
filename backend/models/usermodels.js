@@ -1,7 +1,13 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../config/database.js";
 
-const Users = sequelize.define("User", {
+const Users = sequelize.define("users", {
+    id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true,
+        allowNull: false
+    },
     nome: {
         type: DataTypes.STRING,
         allowNull: false
@@ -24,7 +30,7 @@ const Users = sequelize.define("User", {
         allowNull: false
     }
 },{
-    tableName: "Users",
+    tableName: "users",
     timestamps: true,
     updatedAt: true
 })

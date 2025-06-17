@@ -9,14 +9,6 @@ const produtoRoutes = express.Router()
 //usando o middleware do cors para habilitar os recursos do dominio da pagina web
 produtoRoutes.use(cors())
 
-//definindo o middleware de sessao das rotas
-produtoRoutes.use(session({
-    secret: 'mySecret', // Chave secreta para assinar o cookie da sessão
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false } // Defina como true se estiver usando HTTPS
-}));
-
 //rota para criar um produto
 produtoRoutes.post('/produto', userLogged, isAdmin, async (req,res) => {
     const {nomeProduto, valorProduto, isAtivo, categoriaProduto_id} = req.body
