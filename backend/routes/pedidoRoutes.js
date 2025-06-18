@@ -1,6 +1,7 @@
 import pedidoController from "../controller/pedidoController.js";
 import express from 'express'
 import cors from "cors"
+import { userLogged, isAdmin, authenticateToken } from '../middlewares/authMiddleware.js'
 import { validate } from "../middlewares/validationMiddleware.js";
 import { createPedidoSchema } from "../validators/pedidoValidator.js";
 
@@ -10,11 +11,39 @@ const pedidoRoutes = express.Router()
 pedidoRoutes.use(cors())
 
 //rota para cadastrar pedido
-pedidoRoutes.post('/pedido', validate(createPedidoSchema), async (req,res) => {
-    const {produtosPedido, valorTotalPedido, formaPagamento_id, isRetiradaEstabelecimento, nomeCliente, enderecoCliente} = req.body
+pedidoRoutes.post('/pedido', validate(createPedidoSchema), async (req, res) => {
+    const { produtosPedido,
+        formaPagamento_id,
+        isRetiradaEstabelecimento,
+        nomeCliente,
+        telefoneCliente,
+        cepCliente,
+        tipoLogadouroCliente,
+        logadouroCliente,
+        numeroCliente,
+        quadraCliente,
+        loteCliente,
+        bairroCliente,
+        cidadeCliente,
+        estadoCliente } = req.body
 
     try {
-        const pedido = await pedidoController.createPedido({produtosPedido, valorTotalPedido, formaPagamento_id, isRetiradaEstabelecimento, nomeCliente, enderecoCliente})
+        const pedido = await pedidoController.createPedido({
+            produtosPedido,
+            formaPagamento_id,
+            isRetiradaEstabelecimento,
+            nomeCliente,
+            telefoneCliente,
+            cepCliente,
+            tipoLogadouroCliente,
+            logadouroCliente,
+            numeroCliente,
+            quadraCliente,
+            loteCliente,
+            bairroCliente,
+            cidadeCliente,
+            estadoCliente
+        })
         return res.status(200).json(pedido)
     } catch (error) {
         return res.status(400).send(error)
@@ -22,7 +51,7 @@ pedidoRoutes.post('/pedido', validate(createPedidoSchema), async (req,res) => {
 })
 
 //rota para mostrar todos os pedidos registrados e a quantidade total
-pedidoRoutes.get('/pedido', async (req,res) => {
+pedidoRoutes.get('/pedido', async (req, res) => {
     try {
         const pedidos = await pedidoController.findAndCountAllPedidos()
         return res.status(200).json(pedidos)
@@ -32,8 +61,8 @@ pedidoRoutes.get('/pedido', async (req,res) => {
 })
 
 //rota para filtrar pedido a partir da forma de pagamento
-pedidoRoutes.get('/pedido/formaPagamento/:id', async (req,res) => {
-    const {id} = req.params
+pedidoRoutes.get('/pedido/formaPagamento/:id', async (req, res) => {
+    const { id } = req.params
     try {
         const pedidos = await pedidoController.findPedidosByFormaPagamento(id)
         return res.status(200).json(pedidos)
@@ -43,12 +72,12 @@ pedidoRoutes.get('/pedido/formaPagamento/:id', async (req,res) => {
 })
 
 //rota para atualizar pedido
-pedidoRoutes.put('/pedido/:id', async (req,res) => {
-    const {id} = req.params
+pedidoRoutes.put('/pedido/:id', async (req, res) => {
+    const { id } = req.params
     const updatedData = req.body
 
     try {
-        const pedido = await pedidoController.updatePedido(updatedData,id)
+        const pedido = await pedidoController.updatePedido(updatedData, id)
         return res.status(200).json(pedido)
     } catch (error) {
         return res.status(400).send(error)

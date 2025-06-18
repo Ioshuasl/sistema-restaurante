@@ -1,7 +1,7 @@
 import formaPagamentoController from "../controller/formaPagamentoController.js";
 import express from "express";
 import cors from "cors"
-import { userLogged,isAdmin } from '../middlewares/authMiddleware.js'
+import { userLogged,isAdmin, authenticateToken } from '../middlewares/authMiddleware.js'
 import { validate } from "../middlewares/validationMiddleware.js";
 import { createFormaPagamentoSchema,updateFormaPagamentoSchema } from "../validators/formaPagamentoValidator.js";
 
@@ -11,7 +11,7 @@ const formaPagamentoRoutes = express.Router()
 formaPagamentoRoutes.use(cors())
 
 //rota para cadastrar forma de pagamento
-formaPagamentoRoutes.post('/formaPagamento', userLogged, isAdmin, validate(createFormaPagamentoSchema), async (req,res) => {
+formaPagamentoRoutes.post('/formaPagamento', authenticateToken, isAdmin, validate(createFormaPagamentoSchema), async (req,res) => {
     const {nomeFormaPagamento} = req.body
 
     try {
@@ -34,7 +34,7 @@ formaPagamentoRoutes.get('/formaPagamento', async (req,res) => {
 })
 
 //rota para atualizar uma forma de pagamento
-formaPagamentoRoutes.put('/formaPagamento/:id', userLogged, isAdmin, validate(updateFormaPagamentoSchema), async (req,res) =>{
+formaPagamentoRoutes.put('/formaPagamento/:id', authenticateToken, isAdmin, validate(updateFormaPagamentoSchema), async (req,res) =>{
     const {id} = req.params
     const updatedData = req.body
 
@@ -47,7 +47,7 @@ formaPagamentoRoutes.put('/formaPagamento/:id', userLogged, isAdmin, validate(up
 })
 
 //rota para deletar uma forma de pagamento
-formaPagamentoRoutes.delete('/formaPagamento/:id', userLogged, isAdmin, async (req,res) =>{
+formaPagamentoRoutes.delete('/formaPagamento/:id', authenticateToken, isAdmin, async (req,res) =>{
     const {id} = req.params
 
     try {

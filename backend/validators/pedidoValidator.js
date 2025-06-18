@@ -11,12 +11,27 @@ export const createPedidoSchema = yup.object({
 
     nomeCliente: yup.string().required("O nome do cliente é obrigatório."),
 
-    // Validação condicional: o endereço só é obrigatório se não for para retirada
-    enderecoCliente: yup.string().when('isRetiradaEstabelecimento', {
-        is: false, // Se isRetiradaEstabelecimento for false...
-        then: (schema) => schema.required("O endereço do cliente é obrigatório para entrega."), // ...então o campo é obrigatório.
-        otherwise: (schema) => schema.nullable() // Senão, pode ser nulo.
-    }),
+    telefonetelefoneCliente: yup.string(),
+
+    cepCliente: yup.string()
+        .length(9, "O CEP deve estar no formato 00000-000."),
+
+    tipoLogadouroCliente: yup.string(),
+
+    logadouroCliente: yup.string(),
+
+    numeroCliente: yup.string(),
+
+    quadraCliente: yup.string().nullable(),
+
+    loteCliente: yup.string().nullable(),
+
+    bairroCliente: yup.string(),
+
+    cidadeCliente: yup.string(),
+
+    estadoCliente: yup.string()
+        .length(2, "O estado deve ser a sigla de 2 letras (UF)."),
 
     // Validação do array de produtos
     produtosPedido: yup.array().of(

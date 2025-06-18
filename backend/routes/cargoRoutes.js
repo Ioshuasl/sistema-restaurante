@@ -1,17 +1,16 @@
 import cargoController from "../controller/cargoController";
 import express from 'express'
 import cors from "cors"
-import { userLogged,isAdmin } from "../middlewares/authMiddleware";
+import { userLogged,isAdmin, authenticateToken } from '../middlewares/authMiddleware.js'
 import { validate } from "../middlewares/validationMiddleware";
 import { createCargoSchema, updateCargoSchema } from "../validators/cargoValidator";
-import { use } from "react";
 
 const cargoRoutes = express.Router()
 
 cargoRoutes.use(cors())
 
 //rota para adicionar cargo
-cargoRoutes.post('/cargo',userLogged,isAdmin,validate(createCargoSchema), async (req,res) => {
+cargoRoutes.post('/cargo',authenticateToken,isAdmin,validate(createCargoSchema), async (req,res) => {
     const {nome,descricao} = req.body
 
     try {
@@ -24,7 +23,7 @@ cargoRoutes.post('/cargo',userLogged,isAdmin,validate(createCargoSchema), async 
 })
 
 //rota para listar todos os cargos
-cargoRoutes.get('/cargo', userLogged, async (req,res) => {
+cargoRoutes.get('/cargo', authenticateToken, async (req,res) => {
     try {
         const cargos = await cargoController.getCargos()
         return res.status(200).json(cargos)
@@ -35,7 +34,7 @@ cargoRoutes.get('/cargo', userLogged, async (req,res) => {
 })
 
 //rota para listar o cargo pelo id
-cargoRoutes.get('/cargo/:id', userLogged, async (req,res) => {
+cargoRoutes.get('/cargo/:id', authenticateToken, async (req,res) => {
     const {id} = req.params
 
     try {
@@ -48,7 +47,7 @@ cargoRoutes.get('/cargo/:id', userLogged, async (req,res) => {
 })
 
 //rota para atualizar cargo
-cargoRoutes.put('/cargo/:id', userLogged,isAdmin,validate(updateCargoSchema), async (req,res) =>{
+cargoRoutes.put('/cargo/:id', authenticateToken,isAdmin,validate(updateCargoSchema), async (req,res) =>{
     const {id} = req.params
     const updatedData = req.body
 
@@ -62,7 +61,7 @@ cargoRoutes.put('/cargo/:id', userLogged,isAdmin,validate(updateCargoSchema), as
 })
 
 //rota para deletar cargo
-cargoRoutes.delete('/cargo/:id', userLogged, isAdmin, async (req,res) => {
+cargoRoutes.delete('/cargo/:id', authenticateToken, isAdmin, async (req,res) => {
     const {id} = req.params
 
     try {
@@ -73,3 +72,5 @@ cargoRoutes.delete('/cargo/:id', userLogged, isAdmin, async (req,res) => {
         return res.status(400).send(error)
     }
 })
+
+export default cargoRoutes

@@ -1,8 +1,12 @@
 import Cargo from "../models/cargoModels.js";
+import Users from "../models/usermodels.js";
+
+Users.belongsTo(Cargo, { foreignKey: 'cargoId' });
+Cargo.hasMany(Users, { foreignKey: 'cargoId' });
 
 class CargoController {
     //função para adicionar cargo
-    async createCargo(nome,descricao){
+    async createCargo({nome,descricao}){
         try {
             const cargo = await Cargo.create({nome,descricao})
             return cargo
@@ -51,6 +55,19 @@ class CargoController {
 
     //função para excluir cargo
     async deleteCargo(id){
+
+        //verificar se esse cargo existe
+
+        const validateCargo = await Cargo.findOne({
+            where:{
+                id:id
+            }
+        })
+
+        if (!validateCargo){
+            throw new Error(`O cargo com o id ${id} não existe`)
+        }
+
         try {
             const cargo = await Cargo.destroy({
                 where:{

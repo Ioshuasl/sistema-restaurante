@@ -1,7 +1,7 @@
 import configController from "../controller/configController.js";
 import express from 'express'
 import cors from "cors"
-import { userLogged,isAdmin } from '../middlewares/authMiddleware.js'
+import { userLogged,isAdmin, authenticateToken } from '../middlewares/authMiddleware.js'
 import { validate } from "../middlewares/validationMiddleware.js";
 import { updateConfigSchema } from "../validators/configValidator.js";
 
@@ -9,7 +9,7 @@ const configRoutes = express.Router()
 
 configRoutes.use(cors());
 
-configRoutes.get('/config', userLogged, isAdmin, async (req, res) => {
+configRoutes.get('/config', authenticateToken, isAdmin, async (req, res) => {
     try {
         const config = await configController.getOrCreateConfig(1)
         return res.status(200).json(config)
@@ -19,7 +19,7 @@ configRoutes.get('/config', userLogged, isAdmin, async (req, res) => {
     }
 })
 
-configRoutes.put('/config', userLogged, isAdmin, validate(updateConfigSchema), async (req, res) => {
+configRoutes.put('/config', authenticateToken, isAdmin, validate(updateConfigSchema), async (req, res) => {
 
     const updatedData = req.body
 

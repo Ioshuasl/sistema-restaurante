@@ -1,7 +1,7 @@
 import produtoController from '../controller/produtoController.js'
 import express from 'express'
 import cors from "cors"
-import { userLogged,isAdmin } from '../middlewares/authMiddleware.js'
+import { userLogged,isAdmin, authenticateToken } from '../middlewares/authMiddleware.js'
 import { validate } from "../middlewares/validationMiddleware.js";
 import { createProdutoSchema, updateProdutoSchema } from '../validators/produtoValidator.js'
 
@@ -11,11 +11,9 @@ const produtoRoutes = express.Router()
 produtoRoutes.use(cors())
 
 //rota para criar um produto
-produtoRoutes.post('/produto', userLogged, isAdmin,validate(createProdutoSchema), async (req,res) => {
+produtoRoutes.post('/produto', authenticateToken, isAdmin,validate(createProdutoSchema), async (req,res) => {
     const {nomeProduto, valorProduto, isAtivo, categoriaProduto_id} = req.body
-
-    console.log(req.session.user)
-
+    
     try {
         const produto = await produtoController.createProduto({nomeProduto, valorProduto, isAtivo, categoriaProduto_id})
         return res.status(200).json(produto)
@@ -51,7 +49,7 @@ produtoRoutes.get('/produto/:id', async (req,res) => {
 })
 
 //rota para atualizar um produto
-produtoRoutes.put('/produto/:id', userLogged, isAdmin, validate(updateProdutoSchema), async (req,res) => {
+produtoRoutes.put('/produto/:id', authenticateToken, isAdmin, validate(updateProdutoSchema), async (req,res) => {
     const {id} = req.params
     const {nomeProduto, valorProduto, isAtivo, categoriaProduto_id} = req.body
 
@@ -65,7 +63,7 @@ produtoRoutes.put('/produto/:id', userLogged, isAdmin, validate(updateProdutoSch
 })
 
 //rota para deletar um produto
-produtoRoutes.delete('/produto/:id', userLogged, isAdmin, async (req,res) => {
+produtoRoutes.delete('/produto/:id', authenticateToken, isAdmin, async (req,res) => {
     const {id} = req.params
 
     try {
@@ -78,7 +76,7 @@ produtoRoutes.delete('/produto/:id', userLogged, isAdmin, async (req,res) => {
 })
 
 //rota para ativar e desativar produto
-produtoRoutes.put('/produto/:id/toggle', userLogged, isAdmin, async (req,res) => {
+produtoRoutes.put('/produto/:id/toggle', authenticateToken, isAdmin, async (req,res) => {
     const {id} = req.params
 
     try {

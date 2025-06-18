@@ -1,28 +1,32 @@
-import express from 'express'
-import session from 'express-session'
+import jwt from 'jsonwebtoken'
 
-const validator = express()
-
-validator.use(session({
-    secret: 'mySecret',
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false } // Defina como true se estiver usando HTTPS
-}));
-
-export function userLogged(req, res, next) {
-    if (req.session.user) {
-        console.log(req.session.user);
+export function isAdmin(req, res, next){
+    if (req.user && req.user.cargo === 'administrador') {
         return next(); // Chama o próximo middleware ou rota
     } else {
-        return res.status(401).send("Você precisa estar logado");
+        res.status(403).json({ message: "Acesso proibido. Requer permissão de administrador." });
     }
 }
 
-export function isAdmin(req, res, next){
-    if (req.session.user.isAdmin === true) {
-        return next(); // Chama o próximo middleware ou rota
-    } else {
-        return res.status(403).send("Você não tem permissão para usar essa função");
+export function authenticateToken(req,res,next){
+    const authHeader = req.headers['authorization']
+
+    const token = authHeader && authHeader.split(' ')[1]
+
+    if (token == null){
+        return res.status(401).json({
+            message:"Acesso não autorizado. Token não fornecido"
+        })
     }
+
+    jwt.verify(token,process.env.JWT_SECRET, (err, userPlayload) => {
+        if (err) {
+            return res.status(403).json({
+                message: "Acesso proibido. Token Inválido"
+            })
+        }
+
+        req.user = userPlayload
+        next()
+    })
 }

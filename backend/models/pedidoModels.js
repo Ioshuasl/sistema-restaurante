@@ -29,13 +29,49 @@ const Pedido = sequelize.define('pedidos', {
         type: DataTypes.STRING,
         allowNull: false
     },
-    // Opcional: O endereço só é obrigatório se não for para retirada no estabelecimento.
-    enderecoCliente: {
+    telefoneCliente: {
+        type: DataTypes.STRING(15), // Formato "(00) 00000-0000"
+        allowNull: false
+    },
+    //dados relacionados ao endereço de entrega do cliente
+    cepCliente: {
+        type: DataTypes.STRING(9), // Formato "00000-000"
+        allowNull: false
+    },
+    tipoLogadouroCliente: {
         type: DataTypes.STRING,
-        allowNull: true // Pode ser nulo se isRetiradaEstabelecimento for true.
+        allowNull: false,
+        defaultValue: 'Rua'
+    },
+    logadouroCliente: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    numeroCliente: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    quadraCliente: {
+        type: DataTypes.STRING,
+        allowNull: true // Campos como quadra e lote podem não ser aplicáveis a todos os endereços
+    },
+    loteCliente: {
+        type: DataTypes.STRING,
+        allowNull: true // Permitir nulo para maior flexibilidade
+    },
+    bairroCliente: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    cidadeCliente: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    estadoCliente: {
+        type: DataTypes.STRING(2), //UF (ex: "GO", "SP")
+        allowNull: false
     }
 }, {
-    // CORREÇÃO CRÍTICA: O nome da tabela foi corrigido.
     tableName: 'pedidos',
     timestamps: true
 });

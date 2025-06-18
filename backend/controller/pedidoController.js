@@ -5,8 +5,8 @@ import Pedido from '../models/pedidoModels.js';
 import ItemPedido from '../models/itemPedidoModels.js';
 import FormaPagamento from "../models/formaPagamentoModels.js"
 
-Pedido.belongsTo(FormaPagamento, {foreignKey:'formaPagamento_id'})
-FormaPagamento.hasMany(Pedido, {foreignKey:'formaPagamento_id'})
+Pedido.belongsTo(FormaPagamento, { foreignKey: 'formaPagamento_id' })
+FormaPagamento.hasMany(Pedido, { foreignKey: 'formaPagamento_id' })
 
 // O Pedido tem muitos Itens de Pedido
 Pedido.hasMany(ItemPedido, { foreignKey: 'pedidoId' });
@@ -16,7 +16,7 @@ ItemPedido.belongsTo(Pedido, { foreignKey: 'pedidoId' });
 Produto.hasMany(ItemPedido, { foreignKey: 'produtoId' });
 ItemPedido.belongsTo(Produto, { foreignKey: 'produtoId' });
 
-class PedidoController{
+class PedidoController {
 
     //funcao para criar pedido
     async createPedido(
@@ -24,7 +24,16 @@ class PedidoController{
         formaPagamento_id,
         isRetiradaEstabelecimento,
         nomeCliente,
-        enderecoCliente
+        telefoneCliente,
+        cepCliente,
+        tipoLogadouroCliente,
+        logadouroCliente,
+        numeroCliente,
+        quadraCliente,
+        loteCliente,
+        bairroCliente,
+        cidadeCliente,
+        estadoCliente
     ) {
         // Inicia uma transação gerenciada pelo Sequelize
         const t = await sequelize.transaction();
@@ -34,7 +43,7 @@ class PedidoController{
             if (!formaPagamento) {
                 throw new Error('Forma de pagamento não encontrada ou inválida.');
             }
-            
+
             // Valida se a lista de produtos foi enviada e não está vazia
             if (!produtosPedido || produtosPedido.length === 0) {
                 throw new Error('O pedido deve conter pelo menos um item.');
@@ -45,7 +54,16 @@ class PedidoController{
                 formaPagamento_id,
                 isRetiradaEstabelecimento,
                 nomeCliente,
-                enderecoCliente,
+                telefoneCliente,
+                cepCliente,
+                tipoLogadouroCliente,
+                logadouroCliente,
+                numeroCliente,
+                quadraCliente,
+                loteCliente,
+                bairroCliente,
+                cidadeCliente,
+                estadoCliente,
                 valorTotalPedido: 0 // Valor inicial provisório
             }, {
                 transaction: t
@@ -87,77 +105,77 @@ class PedidoController{
         } catch (error) {
             // Passo 6: Se qualquer passo falhou, desfaz todas as operações
             await t.rollback();
-            
+
             console.error("Erro ao criar pedido:", error.message);
             throw new Error(`Não foi possível criar o pedido: ${error.message}`);
         }
     }
 
     //funcao para encontrar e contar todos os pedidos cadastrados na aplicacao
-    async findAndCountAllPedidos(){
+    async findAndCountAllPedidos() {
         try {
             const pedidos = await Pedido.findAndCountAll({
-                include:[{
+                include: [{
                     model: ItemPedido,
-                    include:[{
-                        model:Produto,
-                        attributes:['nomeProduto']
+                    include: [{
+                        model: Produto,
+                        attributes: ['nomeProduto']
                     }]
                 }]
             })
             return pedidos
         } catch (error) {
             console.error(error)
-            return {message: "Erro ao tentar encontrar pedidos",error}
+            return { message: "Erro ao tentar encontrar pedidos", error }
         }
     }
 
     //funcao para encontrar todos os pedidos cadastrados na aplicacao
-    async findAllPedidos(){
+    async findAllPedidos() {
         try {
             const pedidos = await Pedido.findAll({
-                include:[{
+                include: [{
                     model: ItemPedido,
-                    include:[{
-                        model:Produto,
-                        attributes:['nomeProduto']
+                    include: [{
+                        model: Produto,
+                        attributes: ['nomeProduto']
                     }]
                 }]
             })
             return pedidos
         } catch (error) {
             console.error(error)
-            return {message: "Erro ao tentar encontrar pedidos",error}
+            return { message: "Erro ao tentar encontrar pedidos", error }
         }
     }
 
     //funcao para encontrar pedido que estao vinculados a uma forma de pagamento
-    async findPedidosByFormaPagamento(formaPagamento_id){
+    async findPedidosByFormaPagamento(formaPagamento_id) {
         try {
             const pedidos = await Pedido.findAll({
-                where:{
+                where: {
                     formaPagamento_id: formaPagamento_id
                 }
             })
             return pedidos
         } catch (error) {
             console.error(error)
-            return {message: "Erro ao tentar encontrar os pedidos",error}
+            return { message: "Erro ao tentar encontrar os pedidos", error }
         }
     }
 
     //funcao para atualizar pedido
-    async updatePedido(updatedData,id){
+    async updatePedido(updatedData, id) {
         try {
-            const pedido = await Pedido.update(updatedData,{
-                where:{
-                    id:id
+            const pedido = await Pedido.update(updatedData, {
+                where: {
+                    id: id
                 }
             })
             return pedido
         } catch (error) {
             console.error(error)
-            return {message: "Erro ao tentar atualizar um pedido",error}
+            return { message: "Erro ao tentar atualizar um pedido", error }
         }
     }
 }

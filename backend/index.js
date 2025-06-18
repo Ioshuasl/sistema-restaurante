@@ -7,6 +7,10 @@ import pedidoRoutes from "./routes/pedidoRoutes.js"
 import userRoutes from "./routes/userRoutes.js"
 import cors from "cors"
 import configRoutes from "./routes/configRoutes.js"
+import cargoRoutes from "./routes/cargoRoutes.js"
+import dotenv from 'dotenv'
+
+dotenv.config()
 
 const app = express()
 const PORT = 3300
@@ -17,20 +21,13 @@ app.use(express.json())
 //usando o middleware do cors para habilitar os recursos do dominio da pagina web
 app.use(cors())
 
-// Inicializa a sessão UMA VEZ para toda a aplicação
-app.use(session({
-    secret: process.env.SESSION_SECRET || 'mySecret', // Use uma variável de ambiente!
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false } // Em produção, com HTTPS, use true
-}));
-
 app.use('/api', produtoRoutes)
-app.use('/api',categoriaProdutoRoutes)
-app.use('/api',formaPagamentoRoutes)
-app.use('/api',pedidoRoutes)
-app.use('/api',userRoutes)
-app.use('/api',configRoutes)
+app.use('/api', categoriaProdutoRoutes)
+app.use('/api', formaPagamentoRoutes)
+app.use('/api', pedidoRoutes)
+app.use('/api', userRoutes)
+app.use('/api', configRoutes)
+app.use('/api', cargoRoutes)
 
 try {
     await sequelize.authenticate(); //verifica a conexão com o banco de dados
@@ -41,7 +38,7 @@ try {
     console.error("Falha ao conectar com o banco de dados:", error);
 }
 
-app.get('/', async(req,res) => {
+app.get('/', async (req, res) => {
     res.send("hello world")
 })
 
