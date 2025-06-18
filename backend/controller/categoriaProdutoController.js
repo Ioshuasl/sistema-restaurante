@@ -1,7 +1,7 @@
 import CategoriaProduto from "../models/categoriaProdutoModels.js"
 import Produto from "../models/produtoModels.js"
 
-Produto.belongsTo(CategoriaProduto, { foreignKey: 'categoriaProduto_id' })
+Produto.belongsTo(CategoriaProduto, { foreignKey: 'categoriaProduto_id'});
 CategoriaProduto.hasMany(Produto, { foreignKey: 'categoriaProduto_id' })
 
 class CategoriaProdutoController {

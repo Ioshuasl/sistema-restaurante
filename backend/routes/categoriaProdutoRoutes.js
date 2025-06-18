@@ -1,8 +1,9 @@
 import categoriaProdutoController from "../controller/categoriaProdutoController.js";
 import express from 'express'
-import session from 'express-session'
-import { userLogged,isAdmin } from '../validators/validator.js'
 import cors from "cors"
+import { userLogged,isAdmin } from '../middlewares/authMiddleware.js'
+import { validate } from "../middlewares/validationMiddleware.js";
+import { createCategoriaProdutoSchema, updateCategoriaProdutoSchema } from "../validators/categoriaProdutoValidator.js";
 
 const categoriaProdutoRoutes = express.Router()
 
@@ -10,7 +11,7 @@ const categoriaProdutoRoutes = express.Router()
 categoriaProdutoRoutes.use(cors())
 
 //rota para cadastrar categoria de produto
-categoriaProdutoRoutes.post('/categoriaProduto',userLogged, isAdmin, async (req,res) => {
+categoriaProdutoRoutes.post('/categoriaProduto',userLogged, isAdmin, validate(createCategoriaProdutoSchema), async (req,res) => {
     const {nomeCategoriaProduto} = req.body
 
     try {
@@ -45,7 +46,7 @@ categoriaProdutoRoutes.get('/categoriaProduto/:id', async (req,res) => {
 })  
 
 //rota para atualizar uma categoria de produto
-categoriaProdutoRoutes.put('/categoriaProduto/:id',userLogged, isAdmin, async (req,res) => {
+categoriaProdutoRoutes.put('/categoriaProduto/:id',userLogged, isAdmin, validate(updateCategoriaProdutoSchema), async (req,res) => {
     const {id} = req.params
     const updatedData = req.body
 

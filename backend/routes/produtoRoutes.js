@@ -1,8 +1,9 @@
 import produtoController from '../controller/produtoController.js'
 import express from 'express'
-import session from 'express-session'
-import { userLogged,isAdmin } from '../validators/validator.js'
 import cors from "cors"
+import { userLogged,isAdmin } from '../middlewares/authMiddleware.js'
+import { validate } from "../middlewares/validationMiddleware.js";
+import { createProdutoSchema, updateProdutoSchema } from '../validators/produtoValidator.js'
 
 const produtoRoutes = express.Router()
 
@@ -10,7 +11,7 @@ const produtoRoutes = express.Router()
 produtoRoutes.use(cors())
 
 //rota para criar um produto
-produtoRoutes.post('/produto', userLogged, isAdmin, async (req,res) => {
+produtoRoutes.post('/produto', userLogged, isAdmin,validate(createProdutoSchema), async (req,res) => {
     const {nomeProduto, valorProduto, isAtivo, categoriaProduto_id} = req.body
 
     console.log(req.session.user)
@@ -50,7 +51,7 @@ produtoRoutes.get('/produto/:id', async (req,res) => {
 })
 
 //rota para atualizar um produto
-produtoRoutes.put('/produto/:id', userLogged, isAdmin, async (req,res) => {
+produtoRoutes.put('/produto/:id', userLogged, isAdmin, validate(updateProdutoSchema), async (req,res) => {
     const {id} = req.params
     const {nomeProduto, valorProduto, isAtivo, categoriaProduto_id} = req.body
 

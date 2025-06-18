@@ -1,8 +1,9 @@
 import formaPagamentoController from "../controller/formaPagamentoController.js";
 import express from "express";
-import session from 'express-session'
-import { userLogged,isAdmin } from '../validators/validator.js'
 import cors from "cors"
+import { userLogged,isAdmin } from '../middlewares/authMiddleware.js'
+import { validate } from "../middlewares/validationMiddleware.js";
+import { createFormaPagamentoSchema,updateFormaPagamentoSchema } from "../validators/formaPagamentoValidator.js";
 
 const formaPagamentoRoutes = express.Router()
 
@@ -10,7 +11,7 @@ const formaPagamentoRoutes = express.Router()
 formaPagamentoRoutes.use(cors())
 
 //rota para cadastrar forma de pagamento
-formaPagamentoRoutes.post('/formaPagamento', userLogged, isAdmin, async (req,res) => {
+formaPagamentoRoutes.post('/formaPagamento', userLogged, isAdmin, validate(createFormaPagamentoSchema), async (req,res) => {
     const {nomeFormaPagamento} = req.body
 
     try {
@@ -33,7 +34,7 @@ formaPagamentoRoutes.get('/formaPagamento', async (req,res) => {
 })
 
 //rota para atualizar uma forma de pagamento
-formaPagamentoRoutes.put('/formaPagamento/:id', userLogged, isAdmin, async (req,res) =>{
+formaPagamentoRoutes.put('/formaPagamento/:id', userLogged, isAdmin, validate(updateFormaPagamentoSchema), async (req,res) =>{
     const {id} = req.params
     const updatedData = req.body
 

@@ -1,7 +1,8 @@
 import pedidoController from "../controller/pedidoController.js";
 import express from 'express'
-import session from 'express-session'
 import cors from "cors"
+import { validate } from "../middlewares/validationMiddleware.js";
+import { createPedidoSchema } from "../validators/pedidoValidator.js";
 
 const pedidoRoutes = express.Router()
 
@@ -9,7 +10,7 @@ const pedidoRoutes = express.Router()
 pedidoRoutes.use(cors())
 
 //rota para cadastrar pedido
-pedidoRoutes.post('/pedido', async (req,res) => {
+pedidoRoutes.post('/pedido', validate(createPedidoSchema), async (req,res) => {
     const {produtosPedido, valorTotalPedido, formaPagamento_id, isRetiradaEstabelecimento, nomeCliente, enderecoCliente} = req.body
 
     try {

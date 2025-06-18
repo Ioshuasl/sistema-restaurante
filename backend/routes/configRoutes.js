@@ -1,8 +1,9 @@
 import configController from "../controller/configController.js";
 import express from 'express'
-import session from 'express-session'
-import { userLogged, isAdmin } from '../validators/validator.js'
 import cors from "cors"
+import { userLogged,isAdmin } from '../middlewares/authMiddleware.js'
+import { validate } from "../middlewares/validationMiddleware.js";
+import { updateConfigSchema } from "../validators/configValidator.js";
 
 const configRoutes = express.Router()
 
@@ -18,7 +19,7 @@ configRoutes.get('/config', userLogged, isAdmin, async (req, res) => {
     }
 })
 
-configRoutes.put('/config', userLogged, isAdmin, async (req, res) => {
+configRoutes.put('/config', userLogged, isAdmin, validate(updateConfigSchema), async (req, res) => {
 
     const updatedData = req.body
 

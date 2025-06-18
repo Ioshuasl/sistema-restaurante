@@ -1,8 +1,9 @@
-import session from "express-session";
 import userController from "../controller/userController.js";
 import express from 'express'
-import { isAdmin, userLogged } from "../validators/validator.js";
 import cors from "cors"
+import { userLogged,isAdmin } from '../middlewares/authMiddleware.js'
+import { validate } from "../middlewares/validationMiddleware.js";
+import { loginSchema, createUserSchema, updateUserSchema } from '../validators/userValidator.js'
 
 const userRoutes = express.Router()
 
@@ -10,7 +11,7 @@ const userRoutes = express.Router()
 userRoutes.use(cors())
 
 // Rota para processar o login
-userRoutes.post('/login', async (req, res) => {
+userRoutes.post('/login', validate(loginSchema),async (req, res) => {
     const { username, password } = req.body; // Obtém os dados do formulário
 
     // Verifica se o usuário existe e se a senha está correta
@@ -52,7 +53,7 @@ userRoutes.get('/logout', (req, res) => {
 });
 
 // Rota para criar usuário
-userRoutes.post('/user', userLogged, isAdmin, async (req,res) => {
+userRoutes.post('/user', userLogged, isAdmin, validate(createUserSchema), async (req,res) => {
     const {nome, cargo, isAdmin, username, password} = req.body
 
     try {
@@ -89,7 +90,7 @@ userRoutes.get('/user/:id', async (req,res) => {
 })
 
 //Rota para atualizar um usuário
-userRoutes.put('/user/:id', userLogged, isAdmin, async (req,res) => {
+userRoutes.put('/user/:id', userLogged, isAdmin, validate(updateUserSchema), async (req,res) => {
     const {id} = req.params
     const updatedData = req.body
 
