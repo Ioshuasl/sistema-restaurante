@@ -1,5 +1,6 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../config/database.js";
+import Cargo from "./cargoModels.js";
 
 const Users = sequelize.define("users", {
     id: {
@@ -12,9 +13,12 @@ const Users = sequelize.define("users", {
         type: DataTypes.STRING,
         allowNull: false
     },
-    cargo: {
-        type: DataTypes.ENUM,
-        values:['funcionario','administrador','suporte','cliente'],
+    cargo_id: {
+        type: DataTypes.INTEGER,
+        references: {
+            model: Cargo,
+            key: 'id'
+        },
         allowNull: false
     },
     isAdmin: {

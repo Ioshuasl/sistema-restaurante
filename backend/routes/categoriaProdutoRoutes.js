@@ -16,8 +16,9 @@ categoriaProdutoRoutes.post('/categoriaProduto',userLogged, isAdmin, validate(cr
 
     try {
         const categoriaProduto = await categoriaProdutoController({nomeCategoriaProduto})
-        return res.status(200).json(categoriaProduto)
+        return res.status(201).json(categoriaProduto)
     } catch (error) {
+        console.error(error)
         return res.status(400).send(error)
     }
 })

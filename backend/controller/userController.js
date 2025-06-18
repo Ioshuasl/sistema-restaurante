@@ -3,12 +3,12 @@ import bcrypt from 'bcrypt'
 
 class UserController {
     //funcao para cadastrar usuario
-    async createUser(nome, cargo, isAdmin, username, password) {
+    async createUser(nome, cargo_id, isAdmin, username, password) {
 
         const hashedPassword = await bcrypt.hash(password, 10)
 
         try {
-            const user = await Users.create({nome, cargo, isAdmin, username, password:hashedPassword})
+            const user = await Users.create({nome, cargo_id, isAdmin, username, password:hashedPassword})
             return { message: 'Usuário criado com sucesso', user }
         } catch (error) {
             console.error(error)
