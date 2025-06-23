@@ -1,7 +1,7 @@
 import userController from "../controller/userController.js";
 import express from 'express'
 import cors from "cors"
-import { userLogged, isAdmin, authenticateToken } from '../middlewares/authMiddleware.js'
+import { isAdmin, authenticateToken } from '../middlewares/authMiddleware.js'
 import { validate } from "../middlewares/validationMiddleware.js";
 import { loginSchema, createUserSchema, updateUserSchema } from '../validators/userValidator.js'
 
@@ -32,6 +32,19 @@ userRoutes.get('/dashboard', authenticateToken, async (req, res) => {
         return res.status(401).send('Você precisa estar logado para acessar esta página.');
     }
 });
+
+// Rota para criar o primeiro usuário
+userRoutes.post('/first-user', validate(createUserSchema), async (req, res) => {
+    const { nome, cargo, isAdmin, username, password } = req.body
+
+    try {
+        const user = await userController.createUser({ nome, cargo, isAdmin, username, password })
+        return res.status(200).json(user)
+    } catch (error) {
+        console.error(error)
+        return res.status(400).send(error)
+    }
+})
 
 // Rota para criar usuário
 userRoutes.post('/user', authenticateToken, isAdmin, validate(createUserSchema), async (req, res) => {

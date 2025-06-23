@@ -1,7 +1,7 @@
 import formaPagamentoController from "../controller/formaPagamentoController.js";
 import express from "express";
 import cors from "cors"
-import { userLogged,isAdmin, authenticateToken } from '../middlewares/authMiddleware.js'
+import { isAdmin, authenticateToken } from '../middlewares/authMiddleware.js'
 import { validate } from "../middlewares/validationMiddleware.js";
 import { createFormaPagamentoSchema,updateFormaPagamentoSchema } from "../validators/formaPagamentoValidator.js";
 

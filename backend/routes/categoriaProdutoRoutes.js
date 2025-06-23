@@ -1,7 +1,7 @@
 import categoriaProdutoController from "../controller/categoriaProdutoController.js";
 import express from 'express'
 import cors from "cors"
-import { userLogged,isAdmin, authenticateToken } from '../middlewares/authMiddleware.js'
+import { isAdmin, authenticateToken } from '../middlewares/authMiddleware.js'
 import { validate } from "../middlewares/validationMiddleware.js";
 import { createCategoriaProdutoSchema, updateCategoriaProdutoSchema } from "../validators/categoriaProdutoValidator.js";
 

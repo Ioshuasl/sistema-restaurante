@@ -1,7 +1,7 @@
 import cargoController from "../controller/cargoController";
 import express from 'express'
 import cors from "cors"
-import { userLogged,isAdmin, authenticateToken } from '../middlewares/authMiddleware.js'
+import { isAdmin, authenticateToken } from '../middlewares/authMiddleware.js'
 import { validate } from "../middlewares/validationMiddleware";
 import { createCargoSchema, updateCargoSchema } from "../validators/cargoValidator";
 

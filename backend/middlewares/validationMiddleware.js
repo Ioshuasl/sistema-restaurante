@@ -1,15 +1,3 @@
-import express from 'express'
-import session from 'express-session'
-
-const validator = express()
-
-validator.use(session({
-    secret: 'mySecret',
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false } // Defina como true se estiver usando HTTPS
-}));
-
 // Este middleware recebe um schema e retorna a função de validação
 export const validate = (schema) => async (req, res, next) => {
     try {
@@ -17,9 +5,10 @@ export const validate = (schema) => async (req, res, next) => {
             abortEarly: false, // Retorna todos os erros de uma vez
             stripUnknown: true // Remove campos que não estão no schema
         });
-        
+        console.log("Validação finalizada com sucesso")
         return next();
     } catch (error) {
+        console.error(error)
         if (error instanceof yup.ValidationError) {
             const formattedError = {
                 status: "error",
