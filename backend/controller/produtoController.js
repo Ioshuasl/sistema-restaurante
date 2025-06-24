@@ -7,7 +7,7 @@ CategoriaProduto.hasMany(Produto,{foreignKey:'categoriaProduto_id'})
 class ProdutoController{
 
     //funcao para criar produto
-    async createProduto(nomeProduto, valorProduto, isAtivo, categoriaProduto_id){
+    async createProduto(nomeProduto, valorProduto,image, isAtivo, categoriaProduto_id){
 
         //verificar se a categoria de produto selecionado existe
         const verificarCategoriaProduto = await CategoriaProduto.findByPk(categoriaProduto_id)
@@ -18,7 +18,7 @@ class ProdutoController{
         }
 
         try {
-            const produto = await Produto.create({nomeProduto, valorProduto, isAtivo, categoriaProduto_id})
+            const produto = await Produto.create({nomeProduto, valorProduto,image, isAtivo, categoriaProduto_id})
             return produto
         } catch (error) {
             console.error(error)

@@ -17,6 +17,10 @@ const Produto = sequelize.define('produtos',{
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false
     },
+    image: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
     isAtivo: {
         type: DataTypes.BOOLEAN
     },

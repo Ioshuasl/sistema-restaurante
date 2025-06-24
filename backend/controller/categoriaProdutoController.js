@@ -20,11 +20,7 @@ class CategoriaProdutoController {
     //funcao para encontrar todas as categorias de produto cadastrado na aplicacao
     async findAllCategoriaProdutos() {
         try {
-            const categoriaProdutos = await CategoriaProduto.findAll({
-                include: {
-                    model: Produto
-                }
-            })
+            const categoriaProdutos = await CategoriaProduto.findAll()
             return categoriaProdutos
         } catch (error) {
             console.error(error)
