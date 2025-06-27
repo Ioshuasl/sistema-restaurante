@@ -4,14 +4,16 @@ import cors from 'cors'
 
 const menuRoutes = express.Router()
 
-menuRoutes.get('/menu'), async (req, res) => {
+menuRoutes.use(cors())
+
+menuRoutes.get('/menu', async (req,res) => {
     try {
         const menu = await menuController.getMenu()
         return res.status(200).json(menu)
     } catch (error) {
         console.error(error)
-        return res.status(400).send(error)
+        return res.status(400).json(error)
     }
-}
+})
 
 export default menuRoutes

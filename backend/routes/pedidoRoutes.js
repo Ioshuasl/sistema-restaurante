@@ -59,6 +59,16 @@ pedidoRoutes.get('/pedido', async (req, res) => {
     }
 })
 
+pedidoRoutes.get('/pedido/:id', async (req,res) => {
+    try {
+        const pedido = await pedidoController.findPedidoById()
+        return res.status(200).json(pedido)
+    } catch (error) {
+        console.error(error)
+        return res.status(400).send(error)
+    }
+})
+
 //rota para filtrar pedido a partir da forma de pagamento
 pedidoRoutes.get('/pedido/formaPagamento/:id', async (req, res) => {
     const { id } = req.params

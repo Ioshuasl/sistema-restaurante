@@ -149,6 +149,16 @@ class PedidoController {
         }
     }
 
+    async findPedidoById(id){
+        try {
+            const pedido = await Pedido.findByPk(id)
+            return pedido
+        } catch (error) {
+            console.error(error)
+            return { message: "Erro tentar encontrar o pedido", error}
+        }
+    }
+
     //funcao para encontrar pedido que estao vinculados a uma forma de pagamento
     async findPedidosByFormaPagamento(formaPagamento_id) {
         try {
