@@ -1,10 +1,14 @@
+import Pedido from "../models/pedidoModels.js";
 import SituacaoPedido from "../models/situacaoProdutoModel.js";
 
-class SituacaoPedidoController{
+SituacaoPedido.belongsTo(Pedido, { foreignKey: 'pedido_id' })
+Pedido.hasOne(SituacaoPedido, { foreignKey: 'pedido_id' })
+
+class SituacaoPedidoController {
     //função para criar situação de pedido
-    async createSituacaoPedido(nome,descricao, pedido_id){
+    async createSituacaoPedido(nome, descricao, pedido_id) {
         try {
-            const situacaoPedido = await SituacaoPedido.create({nome,descricao, pedido_id})
+            const situacaoPedido = await SituacaoPedido.create({ nome, descricao, pedido_id })
             return situacaoPedido
         } catch (error) {
             console.error(error)
@@ -13,7 +17,7 @@ class SituacaoPedidoController{
     }
 
     //função para mostrar todas as situações de pedido
-    async getAllSituacaoPedido(){
+    async getAllSituacaoPedido() {
         try {
             const situacaoPedidos = await SituacaoPedido.findAll()
             return situacaoPedidos
@@ -24,7 +28,7 @@ class SituacaoPedidoController{
     }
 
     //função para mostrar situação de pedido pelo id
-    async getSituacaoPedido(id){
+    async getSituacaoPedido(id) {
         try {
             const situacaoPedido = await SituacaoPedido.findByPk(id)
             return situacaoPedido
@@ -35,18 +39,18 @@ class SituacaoPedidoController{
     }
 
     //função para atualizar situação de pedido
-    async updateSituacaoPedido(id, updatedData){
+    async updateSituacaoPedido(id, updatedData) {
 
         const verificar = await SituacaoPedido.findByPk(id)
 
-        if (!verificar){
+        if (!verificar) {
             throw new Error(`Não existe situação de pedido com o seguinte id`, id)
         }
 
         try {
-            const situacaoPedido = await SituacaoPedido.update(updatedData,{
-                where:{
-                    id:id
+            const situacaoPedido = await SituacaoPedido.update(updatedData, {
+                where: {
+                    id: id
                 }
             })
             return situacaoPedido
@@ -57,17 +61,17 @@ class SituacaoPedidoController{
     }
 
     //função para deletar situação de pedido
-    async deleteSituacaoPedido(id){
+    async deleteSituacaoPedido(id) {
         const verificar = await SituacaoPedido.findByPk(id)
 
-        if (!verificar){
+        if (!verificar) {
             throw new Error(`Não existe situação de pedido com o seguinte id`, id)
         }
 
         try {
             const situacaoPedido = await SituacaoPedido.destroy({
                 where: {
-                    id:id
+                    id: id
                 }
             })
             return situacaoPedido
