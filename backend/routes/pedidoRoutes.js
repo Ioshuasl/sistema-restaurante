@@ -1,7 +1,6 @@
 import pedidoController from "../controller/pedidoController.js";
 import express from 'express'
 import cors from "cors"
-import { userLogged, isAdmin, authenticateToken } from '../middlewares/authMiddleware.js'
 import { validate } from "../middlewares/validationMiddleware.js";
 import { createPedidoSchema } from "../validators/pedidoValidator.js";
 

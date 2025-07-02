@@ -1,7 +1,6 @@
 import sequelize from '../config/database.js'; // Importe a instância do sequelize
 import Pedido from "../models/pedidoModels.js"
 import Produto from '../models/produtoModels.js';
-import Pedido from '../models/pedidoModels.js';
 import ItemPedido from '../models/itemPedidoModels.js';
 import FormaPagamento from "../models/formaPagamentoModels.js"
 

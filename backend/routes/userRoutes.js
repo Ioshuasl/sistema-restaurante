@@ -1,7 +1,7 @@
 import userController from "../controller/userController.js";
 import express from 'express'
 import cors from "cors"
-import { userLogged, isAdmin, authenticateToken } from '../middlewares/authMiddleware.js'
+import { isAdmin, authenticateToken } from '../middlewares/authMiddleware.js'
 import { validate } from "../middlewares/validationMiddleware.js";
 import { loginSchema, createUserSchema, updateUserSchema } from '../validators/userValidator.js'
 

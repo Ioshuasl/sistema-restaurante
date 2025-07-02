@@ -1,9 +1,9 @@
-import cargoController from "../controller/cargoController";
+import cargoController from "../controller/cargoController.js";
 import express from 'express'
 import cors from "cors"
-import { userLogged,isAdmin, authenticateToken } from '../middlewares/authMiddleware.js'
-import { validate } from "../middlewares/validationMiddleware";
-import { createCargoSchema, updateCargoSchema } from "../validators/cargoValidator";
+import { isAdmin, authenticateToken } from '../middlewares/authMiddleware.js'
+import { validate } from "../middlewares/validationMiddleware.js";
+import { createCargoSchema, updateCargoSchema } from "../validators/cargoValidator.js";
 
 const cargoRoutes = express.Router()
 
