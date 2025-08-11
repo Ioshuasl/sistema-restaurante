@@ -15,6 +15,10 @@ const Cargo = sequelize.define('Cargo', {
     descricao: {
         type: DataTypes.STRING,
         allowNull: true
+    },
+    admin: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false
     }
 }, {
     tableName: 'cargos',

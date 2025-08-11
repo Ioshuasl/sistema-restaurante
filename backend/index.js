@@ -9,6 +9,7 @@ import cors from "cors"
 import configRoutes from "./routes/configRoutes.js"
 import cargoRoutes from "./routes/cargoRoutes.js"
 import dotenv from 'dotenv'
+import menuRoutes from "./routes/menuRoutes.js"
 
 dotenv.config()
 
@@ -28,6 +29,7 @@ app.use('/api', pedidoRoutes)
 app.use('/api', userRoutes)
 app.use('/api', configRoutes)
 app.use('/api', cargoRoutes)
+app.use('/api', menuRoutes)
 
 try {
     await sequelize.authenticate(); //verifica a conexão com o banco de dados

@@ -12,10 +12,12 @@ categoriaProdutoRoutes.use(cors())
 
 //rota para cadastrar categoria de produto
 categoriaProdutoRoutes.post('/categoriaProduto',authenticateToken, isAdmin, validate(createCategoriaProdutoSchema), async (req,res) => {
+    console.log(req.body)
     const {nomeCategoriaProduto} = req.body
+    console.log(nomeCategoriaProduto)
 
     try {
-        const categoriaProduto = await categoriaProdutoController({nomeCategoriaProduto})
+        const categoriaProduto = await categoriaProdutoController.createCategoriaProduto(nomeCategoriaProduto)
         return res.status(201).json(categoriaProduto)
     } catch (error) {
         console.error(error)

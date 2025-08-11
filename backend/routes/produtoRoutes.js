@@ -12,10 +12,10 @@ produtoRoutes.use(cors())
 
 //rota para criar um produto
 produtoRoutes.post('/produto', authenticateToken, isAdmin,validate(createProdutoSchema), async (req,res) => {
-    const {nomeProduto, valorProduto, isAtivo, categoriaProduto_id} = req.body
+    const {nomeProduto, valorProduto,image, isAtivo, categoriaProduto_id} = req.body
     
     try {
-        const produto = await produtoController.createProduto({nomeProduto, valorProduto, isAtivo, categoriaProduto_id})
+        const produto = await produtoController.createProduto({nomeProduto, valorProduto,image, isAtivo, categoriaProduto_id})
         return res.status(200).json(produto)
     } catch (error) {
         console.error(error)

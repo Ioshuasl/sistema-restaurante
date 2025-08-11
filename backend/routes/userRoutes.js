@@ -12,11 +12,12 @@ userRoutes.use(cors())
 
 // Rota para processar o login
 userRoutes.post('/login', validate(loginSchema), async (req, res) => {
+    console.log(req.body)
     const { username, password } = req.body; // Obtém os dados do formulário
 
     try {
         const user = await userController.loginUser(username, password)
-        res.status(200).send('Login bem-sucedido! Você está logado.', user);
+        res.status(200).json(user)
     } catch (error) {
         console.error(error)
         res.status(401).send(error);
@@ -33,12 +34,30 @@ userRoutes.get('/dashboard', authenticateToken, async (req, res) => {
     }
 });
 
-// Rota para criar usuário
-userRoutes.post('/user', authenticateToken, isAdmin, validate(createUserSchema), async (req, res) => {
-    const { nome, cargo, isAdmin, username, password } = req.body
+userRoutes.get('/dashboard/admin', isAdmin, (req, res) => {
+    res.send('Bem-vindo, painel de administrador!');
+});
+
+// Rota para criar o primeiro usuário
+userRoutes.post('/first-user', validate(createUserSchema), async (req, res) => {
+    console.log(req.body)
+    const { nome, cargo_id, username, password } = req.body
 
     try {
-        const user = await userController.createUser({ nome, cargo, isAdmin, username, password })
+        const user = await userController.createUser({ nome, cargo_id, username, password })
+        return res.status(200).json(user)
+    } catch (error) {
+        console.error(error)
+        return res.status(400).send(error)
+    }
+})
+
+// Rota para criar usuário
+userRoutes.post('/user', authenticateToken, isAdmin, validate(createUserSchema), async (req, res) => {
+    const { nome, cargo_id, username, password } = req.body
+
+    try {
+        const user = await userController.createUser({ nome, cargo_id, username, password })
         return res.status(200).json(user)
     } catch (error) {
         console.error(error)

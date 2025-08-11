@@ -1,14 +1,14 @@
 import Cargo from "../models/cargoModels.js";
 import Users from "../models/usermodels.js";
 
-Users.belongsTo(Cargo, { foreignKey: 'cargoId' });
-Cargo.hasMany(Users, { foreignKey: 'cargoId' });
+Users.belongsTo(Cargo, { foreignKey: 'cargo_id' });
+Cargo.hasMany(Users, { foreignKey: 'cargo_id' });
 
 class CargoController {
     //função para adicionar cargo
-    async createCargo({nome,descricao}){
+    async createCargo({nome, descricao, admin}){
         try {
-            const cargo = await Cargo.create({nome,descricao})
+            const cargo = await Cargo.create({nome,descricao, admin})
             return cargo
         } catch (error) {
             console.error(error)
@@ -19,7 +19,9 @@ class CargoController {
     //função para listar todos os cargos
     async getCargos(){
         try {
-            const cargos = await Cargo.findAndCountAll()
+            const cargos = await Cargo.findAndCountAll({
+                include: [Users]
+            })
             return cargos
         } catch (error) {
             console.error(error)

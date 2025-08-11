@@ -13,6 +13,10 @@ const Pedido = sequelize.define('pedidos', {
         type: DataTypes.DECIMAL(10, 2), // DECIMAL é mais preciso para valores monetários que FLOAT.
         allowNull: false
     },
+    situacaoPedido: {
+        type: DataTypes.ENUM('preparando','entrega','finalizado'),
+        allowNull: false
+    },
     formaPagamento_id: {
         type: DataTypes.INTEGER,
         references: {

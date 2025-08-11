@@ -9,12 +9,24 @@ const cargoRoutes = express.Router()
 
 cargoRoutes.use(cors())
 
-//rota para adicionar cargo
-cargoRoutes.post('/cargo',authenticateToken,isAdmin,validate(createCargoSchema), async (req,res) => {
-    const {nome,descricao} = req.body
+cargoRoutes.post('/cargo/first',validate(createCargoSchema), async (req,res) => {
+    const {nome, descricao, admin} = req.body
 
     try {
-        const cargo = await cargoController.createCargo({nome,descricao})
+        const cargo = await cargoController.createCargo({nome, descricao, admin})
+        return res.status(201).json(cargo)
+    } catch (error) {
+        console.error(error)
+        return res.status(400).send(error)
+    }
+})
+
+//rota para adicionar cargo
+cargoRoutes.post('/cargo',authenticateToken,isAdmin,validate(createCargoSchema), async (req,res) => {
+    const {nome, descricao, admin} = req.body
+
+    try {
+        const cargo = await cargoController.createCargo({nome, descricao, admin})
         return res.status(201).json(cargo)
     } catch (error) {
         console.error(error)
@@ -23,7 +35,7 @@ cargoRoutes.post('/cargo',authenticateToken,isAdmin,validate(createCargoSchema),
 })
 
 //rota para listar todos os cargos
-cargoRoutes.get('/cargo', authenticateToken, async (req,res) => {
+cargoRoutes.get('/cargo', async (req,res) => {
     try {
         const cargos = await cargoController.getCargos()
         return res.status(200).json(cargos)

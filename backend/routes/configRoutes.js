@@ -9,7 +9,7 @@ const configRoutes = express.Router()
 
 configRoutes.use(cors());
 
-configRoutes.get('/config', authenticateToken, isAdmin, async (req, res) => {
+configRoutes.get('/config', async (req, res) => {
     try {
         const config = await configController.getOrCreateConfig(1)
         return res.status(200).json(config)

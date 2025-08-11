@@ -21,6 +21,7 @@ class PedidoController {
     async createPedido(
         produtosPedido,
         formaPagamento_id,
+        situacaoPedido,
         isRetiradaEstabelecimento,
         nomeCliente,
         telefoneCliente,
@@ -52,6 +53,7 @@ class PedidoController {
             const pedido = await Pedido.create({
                 formaPagamento_id,
                 isRetiradaEstabelecimento,
+                situacaoPedido,
                 nomeCliente,
                 telefoneCliente,
                 cepCliente,
@@ -145,6 +147,16 @@ class PedidoController {
         } catch (error) {
             console.error(error)
             return { message: "Erro ao tentar encontrar pedidos", error }
+        }
+    }
+
+    async findPedidoById(id){
+        try {
+            const pedido = await Pedido.findByPk(id)
+            return pedido
+        } catch (error) {
+            console.error(error)
+            return { message: "Erro tentar encontrar o pedido", error}
         }
     }
 
