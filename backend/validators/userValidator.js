@@ -12,7 +12,6 @@ export const createUserSchema = yup.object({
     cargo_id: yup.number()
         .integer("O ID da forma de pagamento deve ser um número inteiro.")
         .positive("O ID da forma de pagamento deve ser um número positivo."),
-    isAdmin: yup.boolean().required("A definição de administrador é obrigatória."),
     username: yup.string().required("O nome de usuário é obrigatório.").min(4, "O nome de usuário deve ter no mínimo 4 caracteres."),
     password: yup.string().required("A senha é obrigatória.").min(8, "A senha deve ter no mínimo 8 caracteres.")
 });

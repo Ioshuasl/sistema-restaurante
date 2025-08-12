@@ -33,6 +33,17 @@ formaPagamentoRoutes.get('/formaPagamento', async (req,res) => {
     }
 })
 
+formaPagamentoRoutes.get('/formaPagamento/:id', async (req,res) => {
+    const {id} = req.params
+
+    try {
+        const formaPagamento = await formaPagamentoController.findFormaPagamento(id)
+        return res.status(200).json(formaPagamento)
+    } catch (error) {
+        return res.status(400).send(error)
+    }
+})
+
 //rota para atualizar uma forma de pagamento
 formaPagamentoRoutes.put('/formaPagamento/:id', authenticateToken, isAdmin, validate(updateFormaPagamentoSchema), async (req,res) =>{
     const {id} = req.params

@@ -13,9 +13,6 @@ export const createPedidoSchema = yup.object({
 
     telefonetelefoneCliente: yup.string(),
 
-    cepCliente: yup.string()
-        .length(9, "O CEP deve estar no formato 00000-000."),
-
     tipoLogadouroCliente: yup.string(),
 
     logadouroCliente: yup.string(),

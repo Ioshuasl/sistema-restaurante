@@ -10,6 +10,8 @@ import configRoutes from "./routes/configRoutes.js"
 import cargoRoutes from "./routes/cargoRoutes.js"
 import dotenv from 'dotenv'
 import menuRoutes from "./routes/menuRoutes.js"
+import uploadRoutes from "./routes/uploadRoutes.js"
+import dashboardRoutes from "./routes/dashboardRoutes.js"
 
 dotenv.config()
 
@@ -22,6 +24,8 @@ app.use(express.json())
 //usando o middleware do cors para habilitar os recursos do dominio da pagina web
 app.use(cors())
 
+// Serve a pasta 'uploads' como um recurso estático
+app.use('/uploads', express.static('public/uploads'));
 app.use('/api', produtoRoutes)
 app.use('/api', categoriaProdutoRoutes)
 app.use('/api', formaPagamentoRoutes)
@@ -30,6 +34,9 @@ app.use('/api', userRoutes)
 app.use('/api', configRoutes)
 app.use('/api', cargoRoutes)
 app.use('/api', menuRoutes)
+// Usa a rota de upload
+app.use('/api',uploadRoutes);
+app.use('/api', dashboardRoutes)
 
 try {
     await sequelize.authenticate(); //verifica a conexão com o banco de dados

@@ -3,6 +3,8 @@ import Pedido from "../models/pedidoModels.js"
 import Produto from '../models/produtoModels.js';
 import ItemPedido from '../models/itemPedidoModels.js';
 import FormaPagamento from "../models/formaPagamentoModels.js"
+import formaPagamentoController from './formaPagamentoController.js';
+import { Sequelize, Op, fn, col, where, literal } from 'sequelize';
 
 Pedido.belongsTo(FormaPagamento, { foreignKey: 'formaPagamento_id' })
 FormaPagamento.hasMany(Pedido, { foreignKey: 'formaPagamento_id' })
@@ -18,7 +20,7 @@ ItemPedido.belongsTo(Produto, { foreignKey: 'produtoId' });
 class PedidoController {
 
     //funcao para criar pedido
-    async createPedido(
+    async createPedido({
         produtosPedido,
         formaPagamento_id,
         situacaoPedido,
@@ -33,13 +35,16 @@ class PedidoController {
         loteCliente,
         bairroCliente,
         cidadeCliente,
-        estadoCliente
-    ) {
+        estadoCliente,
+        taxaentrega
+    }) {
         // Inicia uma transação gerenciada pelo Sequelize
         const t = await sequelize.transaction();
 
         try {
-            const formaPagamento = await FormaPagamento.findByPk(formaPagamento_id);
+            console.log(formaPagamento_id)
+            const formaPagamento = await FormaPagamento.findByPk(formaPagamento_id)
+            console.log(formaPagamento)
             if (!formaPagamento) {
                 throw new Error('Forma de pagamento não encontrada ou inválida.');
             }
@@ -93,7 +98,7 @@ class PedidoController {
             }
 
             // Passo 4: Atualizar o pedido com o valor total final
-            pedido.valorTotalPedido = valorTotalCalculado;
+            pedido.valorTotalPedido = valorTotalCalculado + taxaentrega;
             await pedido.save({
                 transaction: t
             });
@@ -150,13 +155,100 @@ class PedidoController {
         }
     }
 
-    async findPedidoById(id){
+    async countAllPedidos() {
+        try {
+            const pedidos = Pedido.count()
+            return pedidos
+        } catch (error) {
+            return { message: "Erro ao tentar encontrar pedidos", error }
+        }
+    }
+
+    // CORREÇÃO: Usando a função EXTRACT() do PostgreSQL
+    async getMonthlyRevenue(year, month) {
+    try {
+        const result = await Pedido.findOne({
+            attributes: [
+                [fn('SUM', col('valorTotalPedido')), 'totalRevenue']
+            ],
+            where: {
+                [Op.and]: [
+                    where(literal('EXTRACT(YEAR FROM "createdAt")'), Number(year)),
+                    where(literal('EXTRACT(MONTH FROM "createdAt")'), Number(month))
+                ]
+            },
+            raw: true // retorna objeto simples
+        });
+
+        const totalRevenue = parseFloat(result.totalRevenue) || 0;
+
+        return { totalRevenue };
+    } catch (error) {
+        console.error(error);
+        return { message: "Erro ao tentar calcular o rendimento mensal", error };
+    }
+}
+
+    // CORREÇÃO: Usando a função DATE_TRUNC, que é compatível com PostgreSQL
+    async getMonthlyOrderCounts() {
+        try {
+            const monthlyCounts = await Pedido.findAll({
+                attributes: [
+                    [sequelize.fn('DATE_TRUNC', 'month', sequelize.col('createdAt')), 'month'],
+                    [sequelize.fn('COUNT', sequelize.col('id')), 'count']
+                ],
+                group: [sequelize.fn('DATE_TRUNC', 'month', sequelize.col('createdAt'))],
+                order: [[sequelize.fn('DATE_TRUNC', 'month', sequelize.col('createdAt')), 'ASC']]
+            });
+
+            return monthlyCounts;
+        } catch (error) {
+            console.error(error);
+            return { message: "Erro ao tentar obter a contagem de pedidos mensais", error };
+        }
+    }
+
+    // CORREÇÃO: Ajustando a consulta para a sintaxe correta com GROUP BY
+    async getPaymentMethodDistribution() {
+        try {
+            const distribution = await FormaPagamento.findAll({
+                attributes: [
+                    'id',
+                    'nomeFormaPagamento',
+                    [Sequelize.fn('COUNT', Sequelize.col('pedidos.id')), 'count'] // alias correto
+                ],
+                include: [
+                    {
+                        model: Pedido,
+                        as: 'pedidos', // garantir que bate com o relacionamento
+                        attributes: []
+                    }
+                ],
+                group: ['FormaPagamento.id', 'FormaPagamento.nomeFormaPagamento'],
+                order: [['nomeFormaPagamento', 'ASC']]
+            });
+
+
+            // Formata para o frontend
+            const formattedDistribution = distribution.map(item => ({
+                label: item.nomeFormaPagamento,
+                value: parseInt(item.getDataValue('count'), 10)
+            }));
+
+            return formattedDistribution;
+        } catch (error) {
+            console.error(error);
+            return { message: "Erro ao tentar obter a distribuição por forma de pagamento", error };
+        }
+    }
+
+    async findPedidoById(id) {
         try {
             const pedido = await Pedido.findByPk(id)
             return pedido
         } catch (error) {
             console.error(error)
-            return { message: "Erro tentar encontrar o pedido", error}
+            return { message: "Erro tentar encontrar o pedido", error }
         }
     }
 

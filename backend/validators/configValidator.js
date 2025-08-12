@@ -2,17 +2,11 @@ import * as yup from 'yup';
 
 // Esquema para a atualização das configurações do sistema
 export const updateConfigSchema = yup.object({
-    cnpj: yup.string()
-        .length(18, "O CNPJ deve estar no formato 00.000.000/0000-00."),
-
     razaoSocial: yup.string()
         .min(3, "A Razão Social deve ter no mínimo 3 caracteres."),
 
     nomeFantasia: yup.string()
         .min(3, "O Nome Fantasia deve ter no mínimo 3 caracteres."),
-
-    cep: yup.string()
-        .length(9, "O CEP deve estar no formato 00000-000."),
 
     tipoLogadouro: yup.string(),
 

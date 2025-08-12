@@ -51,11 +51,11 @@ produtoRoutes.get('/produto/:id', async (req,res) => {
 //rota para atualizar um produto
 produtoRoutes.put('/produto/:id', authenticateToken, isAdmin, validate(updateProdutoSchema), async (req,res) => {
     const {id} = req.params
-    const {nomeProduto, valorProduto, isAtivo, categoriaProduto_id} = req.body
+    const {nomeProduto, valorProduto,image, isAtivo, categoriaProduto_id} = req.body
 
     try {
-        const produto = await produtoController.updateProduto(id,{nomeProduto, valorProduto, isAtivo, categoriaProduto_id})
-        return res.send(200).json(produto)
+        const produto = await produtoController.updateProduto(id,{nomeProduto, valorProduto,image, isAtivo, categoriaProduto_id})
+        return res.status(200).json(produto)
     } catch (error) {
         console.error(error)
         return res.status(400).send(error)

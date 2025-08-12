@@ -1,56 +1,67 @@
 import FormaPagamento from "../models/formaPagamentoModels.js"
 import Pedido from "../models/pedidoModels.js"
 
-Pedido.belongsTo(FormaPagamento, {foreignKey:'formaPagamento_id'})
-FormaPagamento.hasMany(Pedido, {foreignKey:'formaPagamento_id'})
+Pedido.belongsTo(FormaPagamento, { foreignKey: 'formaPagamento_id' })
+FormaPagamento.hasMany(Pedido, { foreignKey: 'formaPagamento_id' })
 
-class FormaPagamentoController{
+class FormaPagamentoController {
 
     //funcao para criar forma de pagamento
-    async createFormaPagamento(nomeFormaPagamento){
+    async createFormaPagamento(nomeFormaPagamento) {
         try {
-            const formaPagamento = await FormaPagamento.create({nomeFormaPagamento})
-            return {message:"Forma de pagamento criado com sucesso", formaPagamento}
+            const formaPagamento = await FormaPagamento.create(nomeFormaPagamento)
+            return { formaPagamento }
         } catch (error) {
-            return {message: "Erro ao tentar executar a função",error}
+            return { message: "Erro ao tentar executar a função", error }
         }
     }
 
     //funcao para encontrar todas as formas de pagamento
-    async findAllFormaPagamento(){
+    async findAllFormaPagamento() {
         try {
-            const formaPagamentos = await FormaPagamento.findAll()
+            const formaPagamentos = await FormaPagamento.findAll({
+                include: [Pedido]
+            })
             return formaPagamentos
         } catch (error) {
-            return {message: "Erro ao tentar executar a função",error}
+            return { message: "Erro ao tentar executar a função", error }
+        }
+    }
+
+    async findFormaPagamento(id) {
+        try {
+            const formaPagamento = await FormaPagamento.findByPk(id);
+            return formaPagamento
+        } catch (error) {
+            return { message: "Erro ao tentar executar a função", error }
         }
     }
 
     //funcao para atualizar forma de pagamento
-    async updateFormaPagamento(id,updatedData){
+    async updateFormaPagamento(id, updatedData) {
         try {
             const formaPagamento = await FormaPagamento.update(updatedData, {
-                where:{
-                    id:id
+                where: {
+                    id: id
                 }
             })
-            return {message:"Forma de pagamento atualizado com sucesso", formaPagamento}
+            return { message: "Forma de pagamento atualizado com sucesso", formaPagamento }
         } catch (error) {
-            return {message: "Erro ao tentar executar a função",error}
+            return { message: "Erro ao tentar executar a função", error }
         }
     }
 
     //funcao para deletar forma de pagamento
-    async deleteFormaPagamento(id){
+    async deleteFormaPagamento(id) {
         try {
             const formaPagamento = await FormaPagamento.destroy({
-                where:{
-                    id:id
+                where: {
+                    id: id
                 }
             })
-            return {message:"Forma de pagamento excluído com sucesso", formaPagamento}
+            return { message: "Forma de pagamento excluído com sucesso", formaPagamento }
         } catch (error) {
-            return {message: "Erro ao tentar executar a função",error}
+            return { message: "Erro ao tentar executar a função", error }
         }
     }
 }

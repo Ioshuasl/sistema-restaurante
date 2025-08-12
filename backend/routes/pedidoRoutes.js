@@ -15,6 +15,7 @@ pedidoRoutes.post('/pedido', validate(createPedidoSchema), async (req, res) => {
         formaPagamento_id,
         situacaoPedido,
         isRetiradaEstabelecimento,
+        taxaentrega,
         nomeCliente,
         telefoneCliente,
         cepCliente,
@@ -27,12 +28,15 @@ pedidoRoutes.post('/pedido', validate(createPedidoSchema), async (req, res) => {
         cidadeCliente,
         estadoCliente } = req.body
 
+        console.log(req.body)
+
     try {
         const pedido = await pedidoController.createPedido({
             produtosPedido,
             formaPagamento_id,
             situacaoPedido,
             isRetiradaEstabelecimento,
+            taxaentrega,
             nomeCliente,
             telefoneCliente,
             cepCliente,
@@ -61,9 +65,19 @@ pedidoRoutes.get('/pedido', async (req, res) => {
     }
 })
 
-pedidoRoutes.get('/pedido/:id', async (req,res) => {
+pedidoRoutes.get('/pedido/total', async (req, res) => {
     try {
-        const pedido = await pedidoController.findPedidoById()
+        const pedidos = await pedidoController.countAllPedidos()
+        return res.status(200).json(pedidos)
+    } catch (error) {
+        return res.status(400).send(error)
+    }
+})
+
+pedidoRoutes.get('/pedido/:id', async (req,res) => {
+    const {id} = req.params
+    try {
+        const pedido = await pedidoController.findPedidoById(id)
         return res.status(200).json(pedido)
     } catch (error) {
         console.error(error)

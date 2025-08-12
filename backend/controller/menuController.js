@@ -10,7 +10,10 @@ class MenuController{
         try {
             const categoriaProdutos = await CategoriaProduto.findAll({
                 include: {
-                    model: Produto
+                    model: Produto,
+                    where: {
+                        isAtivo: true
+                    }
                 }
             })
             return categoriaProdutos
