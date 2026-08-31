@@ -1,0 +1,18 @@
+# Dependências locais, serão instaladas dentro do contêiner
+node_modules
+
+# Pasta de build, será gerada dentro do contêiner
+dist
+
+# Arquivos de log e ambiente
+npm-debug.log
+.env
+.env.*
+
+# Arquivos de configuração do Docker
+Dockerfile
+.dockerignore
+
+# Arquivos do Git
+.git
+.gitignore

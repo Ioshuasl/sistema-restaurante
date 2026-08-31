@@ -1,0 +1,30 @@
+{
+  "name": "sistema-restaurante",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "type": "module",
+  "author": "Ioshua Souza Lopes",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Ioshuasl/sistema-restaurante-backend.git"
+  },
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "axios": "^1.12.2",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.2",
+    "pg": "^8.13.3",
+    "sequelize": "^6.37.5",
+    "sequelize-cli": "^6.6.3",
+    "yup": "^1.6.1"
+  }
+}
