@@ -2,6 +2,7 @@
 import React, { useState, useMemo } from 'react';
 import { X, Plus, Minus, Check, MessageSquareText } from 'lucide-react';
 import { type Produto, type SubProduto, type CartItem } from '../../types/interfaces-types';
+import { normalizeImageUrl } from '../../utils/normalizeImageUrl';
 
 interface OptionsModalProps {
     product: Produto;
@@ -86,7 +87,7 @@ export default function OptionsModal({ product, initialItem, onClose, onSave }: 
                         {product.image && (
                             <div className="w-full aspect-[16/9] rounded-[2rem] overflow-hidden shadow-sm border border-slate-100 dark:border-slate-800">
                                 <img 
-                                    src={product.image} 
+                                    src={normalizeImageUrl(product.image)} 
                                     alt={product.nomeProduto} 
                                     className="w-full h-full object-cover" 
                                 />

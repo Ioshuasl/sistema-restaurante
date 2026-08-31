@@ -2,6 +2,7 @@
 import React from 'react';
 import { X, ShoppingBag, Plus, Minus, ArrowRight, AlertCircle } from 'lucide-react';
 import { type CartItem } from '../../types/interfaces-types';
+import { normalizeImageUrl } from '../../utils/normalizeImageUrl';
 
 interface CartDrawerProps {
     isOpen: boolean;
@@ -48,7 +49,7 @@ export default function CartDrawer({ isOpen, onClose, cart, onIncrement, onDecre
                             ) : (
                                 cart.map((item) => (
                                     <div key={item.cartItemId} className="flex gap-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 transition-colors">
-                                        <img src={item.product.image} alt={item.product.nomeProduto} className="w-20 h-20 object-cover rounded-xl shadow-sm" />
+                                        <img src={normalizeImageUrl(item.product.image)} alt={item.product.nomeProduto} className="w-20 h-20 object-cover rounded-xl shadow-sm" />
                                         <div className="flex-1 min-w-0">
                                             <h3 className="font-bold text-slate-800 dark:text-slate-100 truncate transition-colors">{item.product.nomeProduto}</h3>
                                             <div className="mt-1 space-y-0.5">

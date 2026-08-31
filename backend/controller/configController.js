@@ -1,4 +1,5 @@
 import { Config } from "../models/index.js";
+import { normalizeConfigAssets } from "../utils/publicUrl.js";
 
 class ConfigController {
 
@@ -53,7 +54,7 @@ class ConfigController {
                 console.log("Registro de configuração inicial criado com sucesso");
             }
 
-            return config;
+            return normalizeConfigAssets(config);
 
         } catch (error) {
             console.error(error);
@@ -72,7 +73,7 @@ class ConfigController {
 
             const updatedConfig = await config.update(updatedData);
 
-            return updatedConfig;
+            return normalizeConfigAssets(updatedConfig);
 
         } catch (error) {
             console.error(error);

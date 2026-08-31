@@ -15,6 +15,7 @@ import {
 import { getConfig } from '../../../services/configService';
 import { getAllFormasPagamento } from '../../../services/formaPagamentoService';
 import { createPedido } from '../../../services/pedidoService';
+import { normalizeImageUrl } from '../../../utils/normalizeImageUrl';
 
 type Props = {
     cart: CartItem[];
@@ -449,7 +450,7 @@ export default function Checkout({ cart, onBack, onConfirm, onIncrease, onDecrea
                             <div className="space-y-4 mb-8">
                                 {cart.map((item) => (
                                     <div key={item.cartItemId} className="flex gap-4 p-4 rounded-3xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 transition-colors">
-                                        <img src={item.product.image || `https://picsum.photos/seed/${item.product.id}/200`} className="w-16 h-16 object-cover rounded-2xl" alt={item.product.nomeProduto} />
+                                        <img src={normalizeImageUrl(item.product.image) || `https://picsum.photos/seed/${item.product.id}/200`} className="w-16 h-16 object-cover rounded-2xl" alt={item.product.nomeProduto} />
                                         <div className="flex-1 min-w-0">
                                             <p className="text-sm font-black text-slate-800 dark:text-slate-100 truncate transition-colors">{item.product.nomeProduto}</p>
                                             <div className="flex flex-wrap gap-1 mt-1">

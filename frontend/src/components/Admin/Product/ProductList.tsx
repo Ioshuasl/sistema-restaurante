@@ -2,6 +2,7 @@
 import React from 'react';
 import { Edit2, Trash2, Image as ImageIcon, ToggleLeft, ToggleRight } from 'lucide-react';
 import { type Produto } from '../../../types/interfaces-types';
+import { normalizeImageUrl } from '../../../utils/normalizeImageUrl';
 
 interface ProductListProps {
   produtos: Produto[];
@@ -38,7 +39,7 @@ const ProductList: React.FC<ProductListProps> = ({ produtos, onEdit, onDelete, o
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden border border-slate-200 dark:border-slate-700 shrink-0">
                     <img 
-                        src={produto.image || `https://picsum.photos/seed/${produto.id}/100`} 
+                        src={normalizeImageUrl(produto.image) || `https://picsum.photos/seed/${produto.id}/100`} 
                         className="w-full h-full object-cover" 
                         alt={produto.nomeProduto} 
                     />

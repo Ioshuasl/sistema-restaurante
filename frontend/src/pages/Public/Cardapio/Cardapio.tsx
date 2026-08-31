@@ -7,6 +7,7 @@ import { getMenu } from '../../../services/menuService';
 import { getConfig } from '../../../services/configService';
 import { type Menu, type Produto, type CartItem, type SubProduto, type Config, type HorarioDia } from '../../../types/interfaces-types';
 import { Loader2, WifiOff, SearchX, Plus, ChevronRight, Info, Clock, AlertCircle } from 'lucide-react';
+import { normalizeImageUrl } from '../../../utils/normalizeImageUrl';
 
 interface CardapioProps {
     cart: CartItem[];
@@ -178,7 +179,7 @@ export default function Cardapio({ cart, setCart, isDarkMode, toggleTheme, onChe
                     className={`group bg-white dark:bg-slate-900 p-3 shadow-sm hover:shadow-md transition-all flex items-center gap-3 cursor-pointer border border-slate-100 dark:border-slate-800 ${borderRadiusClass} ${!isStoreOpen ? 'grayscale' : ''}`}
                 >
                     <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0">
-                        <img src={product.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200'} className="w-full h-full object-cover group-hover:scale-110 transition duration-500" alt={product.nomeProduto} />
+                        <img src={normalizeImageUrl(product.image) || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200'} className="w-full h-full object-cover group-hover:scale-110 transition duration-500" alt={product.nomeProduto} />
                     </div>
                     <div className="flex-1 min-w-0">
                         <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{product.nomeProduto}</h4>
@@ -216,7 +217,7 @@ export default function Cardapio({ cart, setCart, isDarkMode, toggleTheme, onChe
         return (
             <div key={product.id} className={`group bg-white dark:bg-slate-900 p-4 shadow-sm hover:shadow-xl transition-all flex flex-col border border-slate-100 dark:border-slate-800 ${borderRadiusClass} ${!isStoreOpen ? 'grayscale' : ''}`}>
                 <div className="relative mb-4 overflow-hidden aspect-[5/4] rounded-2xl">
-                    <img src={product.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400'} className="w-full h-full object-cover group-hover:scale-110 transition duration-500" alt={product.nomeProduto} />
+                    <img src={normalizeImageUrl(product.image) || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400'} className="w-full h-full object-cover group-hover:scale-110 transition duration-500" alt={product.nomeProduto} />
                 </div>
                 <div className="flex-1">
                     <h4 className="text-lg font-black text-slate-800 dark:text-slate-100 mb-1">{product.nomeProduto}</h4>
@@ -299,7 +300,7 @@ export default function Cardapio({ cart, setCart, isDarkMode, toggleTheme, onChe
 
             {config?.showBanner && config.bannerImage && (
                 <div className="w-full h-40 sm:h-56 overflow-hidden relative border-b border-slate-200 dark:border-slate-800">
-                    <img src={config.bannerImage} className="w-full h-full object-cover" alt="Ofertas Especiais" />
+                    <img src={normalizeImageUrl(config.bannerImage)} className="w-full h-full object-cover" alt="Ofertas Especiais" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-8">
                         <div className="text-white">
                             <span className="text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full" style={{ backgroundColor: 'var(--primary-color)' }}>Destaque do Dia</span>

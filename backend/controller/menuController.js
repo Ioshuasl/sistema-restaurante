@@ -1,4 +1,5 @@
 import { CategoriaProduto, Produto, GrupoOpcao, SubProduto } from "../models/index.js";
+import { normalizeMenuCategories } from "../utils/publicUrl.js";
 
 class MenuController{
     //funcao para montar o menu do cardápio com as categorias de produtos e os produtos
@@ -10,16 +11,13 @@ class MenuController{
                     where: {
                         isAtivo: true
                     },
-                    // O 'include' aninhado funciona porque o Sequelize
-                    // já "sabe" da associação 'gruposOpcoes'
                     include: {
                         model: GrupoOpcao,
-                        as: 'gruposOpcoes', // O 'as' deve bater com a associação
-                        required: false,   
-                        
+                        as: 'gruposOpcoes',
+                        required: false,
                         include: {
                             model: SubProduto,
-                            as: 'opcoes', // O 'as' deve bater com a associação
+                            as: 'opcoes',
                             where: {
                                 isAtivo: true 
                             },
@@ -28,7 +26,9 @@ class MenuController{
                     }
                 }
             })
-            return categoriaProdutos
+
+            const plainMenu = categoriaProdutos.map((category) => category.get({ plain: true }));
+            return normalizeMenuCategories(plainMenu);
         } catch (error) {
             console.error(error)
             return { message: "Erro ao tentar executar a função", error }

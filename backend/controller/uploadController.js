@@ -1,5 +1,6 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { buildUploadUrl } from '../utils/publicUrl.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -13,10 +14,7 @@ class UploadController {
     try {
       // O nome do arquivo salvo é gerado pelo Multer
       const fileName = req.file.filename;
-      
-      // A URL é o caminho público para o arquivo
-      // Exemplo: http://api.restaurante/uploads/nome-do-arquivo.jpg
-      const imageUrl = `${req.protocol}://${req.get('host')}/uploads/${fileName}`;
+      const imageUrl = buildUploadUrl(fileName);
 
       return res.status(200).send({
         message: 'Imagem enviada com sucesso.',

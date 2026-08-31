@@ -3,6 +3,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { Sequelize, Op, fn, col, where, literal } from 'sequelize';
 import { sequelize, CategoriaProduto, Produto, GrupoOpcao, SubProduto } from "../models/index.js";
+import { normalizeProductImage } from "../utils/publicUrl.js";
 
 
 // --- HELPER PARA INCLUDES ---
@@ -15,6 +16,26 @@ const includeGruposEopcoes = {
         as: 'opcoes'
     }
 };
+
+function serializeProduto(produto) {
+    if (!produto) return produto;
+    const plain = typeof produto.toJSON === 'function' ? produto.toJSON() : produto;
+    return normalizeProductImage(plain);
+}
+
+function serializeProdutoList(result) {
+    if (!result) return result;
+    if (Array.isArray(result.rows)) {
+        return {
+            ...result,
+            rows: result.rows.map(serializeProduto),
+        };
+    }
+    if (Array.isArray(result)) {
+        return result.map(serializeProduto);
+    }
+    return serializeProduto(result);
+}
 
 
 class ProdutoController {
@@ -83,7 +104,7 @@ class ProdutoController {
                 include: [includeGruposEopcoes] // Usa o helper
             });
 
-            return produtoComSubprodutos;
+            return serializeProduto(produtoComSubprodutos);
         } catch (error) {
             // 6. Se algo deu errado, "desfaz" a transação
             await t.rollback();
@@ -98,7 +119,7 @@ class ProdutoController {
             const produtos = await Produto.findAndCountAll({
                 include: [includeGruposEopcoes] // Usa o helper
             })
-            return produtos
+            return serializeProdutoList(produtos)
         } catch (error) {
             console.error(error)
             return { message: "Erro ao tentar executar a função", error }
@@ -114,7 +135,7 @@ class ProdutoController {
                 },
                 include: [includeGruposEopcoes] // Usa o helper
             })
-            return produtos
+            return serializeProdutoList(produtos)
         } catch (error) {
             console.error(error)
             return { message: "Erro ao tentar encontrar apenas os produtos ativos", error }
@@ -127,7 +148,7 @@ class ProdutoController {
             const produto = await Produto.findByPk(id, {
                 include: [includeGruposEopcoes] // Usa o helper
             })
-            return produto
+            return serializeProduto(produto)
         } catch (error) {
             console.error(error)
             return { message: "Erro ao tentar executar a função", error }
@@ -248,7 +269,7 @@ class ProdutoController {
                 include: [includeGruposEopcoes]
             });
 
-            return { message: "Produto atualizado com sucesso", produto: produtoAtualizado };
+            return { message: "Produto atualizado com sucesso", produto: serializeProduto(produtoAtualizado) };
         } catch (error) {
             // 9. Se algo deu errado, "desfaz"
             await t.rollback();
@@ -310,7 +331,7 @@ class ProdutoController {
             produto.isAtivo = !produto.isAtivo
             //salvando as alteracoes
             await produto.save()
-            return produto
+            return serializeProduto(produto)
         } catch (error) {
             return { message: "Erro ao tentar modificar produto", error }
         }
