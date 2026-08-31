@@ -1,4 +1,5 @@
 const DEFAULT_PUBLIC_API_URL = 'https://api-gs-sabores.ioshuavps.com.br';
+const DEFAULT_UPLOADS_BASE_URL = 'https://projeto-backend-restaurante.lwcbm0.easypanel.host';
 
 export function getPublicApiBaseUrl() {
     const configured = process.env.PUBLIC_API_URL?.trim();
@@ -8,8 +9,16 @@ export function getPublicApiBaseUrl() {
     return DEFAULT_PUBLIC_API_URL;
 }
 
+export function getUploadsBaseUrl() {
+    const configured = process.env.UPLOADS_PUBLIC_URL?.trim();
+    if (configured) {
+        return configured.replace(/\/$/, '');
+    }
+    return DEFAULT_UPLOADS_BASE_URL;
+}
+
 export function buildUploadUrl(fileName) {
-    return `${getPublicApiBaseUrl()}/uploads/${fileName}`;
+    return `${getUploadsBaseUrl()}/uploads/${fileName}`;
 }
 
 export function normalizePublicUrl(url) {
@@ -23,18 +32,11 @@ export function normalizePublicUrl(url) {
     }
 
     if (normalized.startsWith('/uploads/')) {
-        return `${getPublicApiBaseUrl()}${normalized}`;
+        return `${getUploadsBaseUrl()}${normalized}`;
     }
 
-    normalized = normalized.replace(/^http:\/\//i, 'https://');
-
-    const publicBase = getPublicApiBaseUrl();
-    normalized = normalized.replace(
-        /https?:\/\/[^/]+\/uploads\//i,
-        `${publicBase}/uploads/`
-    );
-
-    return normalized;
+    // Mantém o host original; apenas corrige mixed content.
+    return normalized.replace(/^http:\/\//i, 'https://');
 }
 
 export function normalizeProductImage(product) {

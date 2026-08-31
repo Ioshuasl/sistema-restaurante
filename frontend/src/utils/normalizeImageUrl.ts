@@ -1,8 +1,8 @@
-const DEFAULT_PUBLIC_API_BASE = 'https://api-gs-sabores.ioshuavps.com.br';
+const DEFAULT_UPLOADS_BASE = 'https://projeto-backend-restaurante.lwcbm0.easypanel.host';
 
-function getPublicApiBaseUrl() {
-  const configured = import.meta.env.VITE_BACKEND_API_URL?.replace(/\/api\/?$/, '');
-  return (configured || DEFAULT_PUBLIC_API_BASE).replace(/\/$/, '');
+function getUploadsBaseUrl() {
+  const configured = import.meta.env.VITE_UPLOADS_BASE_URL?.replace(/\/$/, '');
+  return configured || DEFAULT_UPLOADS_BASE;
 }
 
 export function normalizeImageUrl(url?: string | null): string {
@@ -12,14 +12,8 @@ export function normalizeImageUrl(url?: string | null): string {
   if (!normalized) return '';
 
   if (normalized.startsWith('/uploads/')) {
-    return `${getPublicApiBaseUrl()}${normalized}`;
+    return `${getUploadsBaseUrl()}${normalized}`;
   }
 
-  normalized = normalized.replace(/^http:\/\//i, 'https://');
-  normalized = normalized.replace(
-    /https?:\/\/[^/]+\/uploads\//i,
-    `${getPublicApiBaseUrl()}/uploads/`
-  );
-
-  return normalized;
+  return normalized.replace(/^http:\/\//i, 'https://');
 }
