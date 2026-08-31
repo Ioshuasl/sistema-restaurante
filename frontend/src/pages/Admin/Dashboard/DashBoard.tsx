@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
 import { getMonthlyRevenue, getTotalOrders } from '../../../services/dashboardService';
-import { getAllPedidos } from '../../../services/pedidoService';
+import { getRecentPedidos } from '../../../services/pedidoService';
 import { type Pedido } from '../../../types/interfaces-types';
 import Sidebar from '../../../components/Admin/Sidebar';
 import AdminHeader from '../../../components/Admin/AdminHeader';
@@ -35,16 +35,14 @@ const DashBoard: React.FC<Props> = ({ isDarkMode, toggleTheme }) => {
 
   const fetchData = useCallback(async () => {
     try {
-      const [revData, ordCount, allPedidos] = await Promise.all([
+      const [revData, ordCount, recent] = await Promise.all([
         getMonthlyRevenue(),
         getTotalOrders(),
-        getAllPedidos()
+        getRecentPedidos(5)
       ]);
       setRevenue(revData.totalRevenue || 0);
       setTotalOrders(ordCount || 0);
-      
-      const ordersArray = Array.isArray(allPedidos) ? allPedidos : (allPedidos as any).rows || [];
-      setRecentOrders(ordersArray.slice(0, 5));
+      setRecentOrders(recent);
     } catch (error) {
       console.error("Erro ao carregar dados do dashboard:", error);
     } finally {

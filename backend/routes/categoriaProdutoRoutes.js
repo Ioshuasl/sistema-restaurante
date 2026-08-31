@@ -4,6 +4,7 @@ import cors from "cors"
 import { isAdmin, authenticateToken } from '../middlewares/authMiddleware.js'
 import { validate } from "../middlewares/validationMiddleware.js";
 import { createCategoriaProdutoSchema, updateCategoriaProdutoSchema } from "../validators/categoriaProdutoValidator.js";
+import { invalidateMenuCache } from '../utils/publicCache.js';
 
 const categoriaProdutoRoutes = express.Router()
 
@@ -16,6 +17,7 @@ categoriaProdutoRoutes.post('/categoriaProduto',authenticateToken, isAdmin, vali
 
     try {
         const categoriaProduto = await categoriaProdutoController.createCategoriaProduto(nomeCategoriaProduto)
+        invalidateMenuCache();
         return res.status(201).json(categoriaProduto)
     } catch (error) {
         console.error(error)
@@ -53,6 +55,7 @@ categoriaProdutoRoutes.put('/categoriaProduto/:id',authenticateToken, isAdmin, v
 
     try {
         const categoriaProduto = await categoriaProdutoController.updateCategoriaProduto(id,updatedData)
+        invalidateMenuCache();
         return res.status(200).json(categoriaProduto)
     } catch (error) {
         return res.status(400).send(error)
@@ -65,6 +68,7 @@ categoriaProdutoRoutes.delete('/categoriaProduto/:id', authenticateToken, isAdmi
 
     try {
         const categoriaProduto = await categoriaProdutoController.deleteCategoriaProduto(id)
+        invalidateMenuCache();
         return res.status(200).json(categoriaProduto)
     } catch (error) {
         return res.status(400).send(error)

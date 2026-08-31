@@ -86,15 +86,47 @@ pedidoRoutes.post('/pedido/:id/print', async (req, res) => {
     }
 })
 
-//rota para mostrar todos os pedidos registrados e a quantidade total
+//rota para mostrar pedidos com paginação e filtros
 pedidoRoutes.get('/pedido', async (req, res) => {
     try {
-        const pedidos = await pedidoController.findAndCountAllPedidos()
-        return res.status(200).json(pedidos)
+        const { limit, offset, startDate, endDate, status, activeOnly, includeItems } = req.query;
+        const pedidos = await pedidoController.findAndCountAllPedidos({
+            limit,
+            offset,
+            startDate,
+            endDate,
+            status,
+            activeOnly,
+            includeItems: includeItems === 'true',
+        });
+        return res.status(200).json(pedidos);
     } catch (error) {
-        return res.status(400).send(error)
+        return res.status(400).send(error);
     }
-})
+});
+
+pedidoRoutes.get('/pedido/recent', async (req, res) => {
+    try {
+        const { limit } = req.query;
+        const pedidos = await pedidoController.findRecentPedidos(limit);
+        return res.status(200).json(pedidos);
+    } catch (error) {
+        return res.status(400).send(error);
+    }
+});
+
+pedidoRoutes.get('/pedido/poll', async (req, res) => {
+    try {
+        const { since } = req.query;
+        const result = await pedidoController.pollPedidos(since);
+        if (result.message) {
+            return res.status(400).json(result);
+        }
+        return res.status(200).json(result);
+    } catch (error) {
+        return res.status(400).send(error);
+    }
+});
 
 pedidoRoutes.get('/pedido/total', async (req, res) => {
     try {

@@ -5,6 +5,51 @@ import { formatTelefone } from '../functions/formatTelefone.js';
 import { sendMessageWhatsapp } from '../functions/sendMessageWhatsapp.js';
 import { sendToAutomaticPrint } from '../functions/automatic-print.js';
 
+const pedidoItemsInclude = {
+    model: ItemPedido,
+    as: 'itensPedido',
+    include: [
+        {
+            model: Produto,
+            attributes: ['nomeProduto']
+        },
+        {
+            model: SubItemPedido,
+            as: 'subItensPedido',
+            include: [
+                {
+                    model: SubProduto,
+                    attributes: ['nomeSubProduto']
+                }
+            ]
+        }
+    ]
+};
+
+function buildPedidoWhere({ startDate, endDate, status, activeOnly }) {
+    const whereClause = {};
+
+    if (status && status !== 'todos') {
+        whereClause.situacaoPedido = status;
+    }
+
+    if (activeOnly === 'true' || activeOnly === true) {
+        whereClause.situacaoPedido = { [Op.in]: ['preparando', 'entrega'] };
+    }
+
+    if (startDate || endDate) {
+        whereClause.createdAt = {};
+        if (startDate) whereClause.createdAt[Op.gte] = new Date(startDate);
+        if (endDate) {
+            const end = new Date(endDate);
+            end.setHours(23, 59, 59, 999);
+            whereClause.createdAt[Op.lte] = end;
+        }
+    }
+
+    return whereClause;
+}
+
 class PedidoController {
 
     //funcao para criar pedido
@@ -254,36 +299,70 @@ class PedidoController {
         }
     }
 
-    //funcao para encontrar e contar todos os pedidos cadastrados na aplicacao
-    async findAndCountAllPedidos() {
+    async findAndCountAllPedidos({ limit = 100, offset = 0, startDate, endDate, status, activeOnly, includeItems = false } = {}) {
         try {
-            const pedidos = await Pedido.findAndCountAll({
-                include: [{
-                    model: ItemPedido,
-                    as: 'itensPedido',  // use o alias correto
-                    include: [
-                        {
-                            model: Produto,
-                            attributes: ['nomeProduto']
-                        },
-                        {
-                            model: SubItemPedido,
-                            as: 'subItensPedido',  // alias para subItensPedido
-                            include: [
-                                {
-                                    model: SubProduto,
-                                    attributes: ['nomeSubProduto']
-                                }
-                            ]
-                        }
-                    ]
-                }],
-                order: [['id', 'DESC']]  // Ordena por ID de forma decrescente
-            });
-            return pedidos
+            const parsedLimit = Math.min(Math.max(Number(limit) || 100, 1), 500);
+            const parsedOffset = Math.max(Number(offset) || 0, 0);
+
+            if (!startDate && !endDate && !status && !activeOnly) {
+                const defaultStart = new Date();
+                defaultStart.setDate(defaultStart.getDate() - 30);
+                startDate = defaultStart.toISOString().split('T')[0];
+            }
+
+            const query = {
+                where: buildPedidoWhere({ startDate, endDate, status, activeOnly }),
+                order: [['id', 'DESC']],
+                limit: parsedLimit,
+                offset: parsedOffset,
+            };
+
+            if (includeItems) {
+                query.include = [pedidoItemsInclude];
+            }
+
+            const pedidos = await Pedido.findAndCountAll(query);
+            return pedidos;
         } catch (error) {
-            console.error(error)
-            return { message: "Erro ao tentar encontrar pedidos", error }
+            console.error(error);
+            return { message: "Erro ao tentar encontrar pedidos", error };
+        }
+    }
+
+    async findRecentPedidos(limit = 5) {
+        try {
+            return await Pedido.findAll({
+                order: [['id', 'DESC']],
+                limit: Math.min(Number(limit) || 5, 20),
+            });
+        } catch (error) {
+            console.error(error);
+            return { message: "Erro ao tentar encontrar pedidos recentes", error };
+        }
+    }
+
+    async pollPedidos(since) {
+        try {
+            const sinceDate = since ? new Date(since) : new Date(Date.now() - 60000);
+            if (Number.isNaN(sinceDate.getTime())) {
+                throw new Error('Parâmetro since inválido');
+            }
+
+            const pedidos = await Pedido.findAll({
+                where: {
+                    [Op.or]: [
+                        { updatedAt: { [Op.gt]: sinceDate } },
+                        { createdAt: { [Op.gt]: sinceDate } },
+                    ],
+                },
+                order: [['id', 'DESC']],
+                limit: 100,
+            });
+
+            return { rows: pedidos, serverTime: new Date().toISOString() };
+        } catch (error) {
+            console.error(error);
+            return { message: "Erro ao consultar atualizações de pedidos", error };
         }
     }
 
@@ -408,11 +487,13 @@ class PedidoController {
 
     async findPedidoById(id) {
         try {
-            const pedido = await Pedido.findByPk(id)
-            return pedido
+            const pedido = await Pedido.findByPk(id, {
+                include: [pedidoItemsInclude],
+            });
+            return pedido;
         } catch (error) {
-            console.error(error)
-            return { message: "Erro tentar encontrar o pedido", error }
+            console.error(error);
+            return { message: "Erro tentar encontrar o pedido", error };
         }
     }
 

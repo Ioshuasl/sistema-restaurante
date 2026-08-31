@@ -11,7 +11,7 @@ import {
   ChevronRight,
   FilterX
 } from 'lucide-react';
-import { getAllPedidos } from '../../../services/pedidoService';
+import { getPedidos, pollPedidos, getPedidoById } from '../../../services/pedidoService';
 import { type Pedido } from '../../../types/interfaces-types';
 import OrderList from '../../../components/Admin/Order/OrderList';
 import OrderGrid from '../../../components/Admin/Order/OrderGrid';
@@ -47,9 +47,11 @@ export default function OrderManagment({ isDarkMode, toggleTheme }: Props) {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedPedido, setSelectedPedido] = useState<Pedido | null>(null);
+  const [loadingPedidoDetail, setLoadingPedidoDetail] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [hasUnread, setHasUnread] = useState(false);
 
+  const lastPollTime = useRef<string>(new Date().toISOString());
   const lastOrderIds = useRef<Set<number>>(new Set());
   const isInitialLoad = useRef(true);
 
@@ -81,14 +83,26 @@ export default function OrderManagment({ isDarkMode, toggleTheme }: Props) {
     } catch (e) { console.error(e); }
   }, [soundEnabled]);
 
+  const mergePedidos = useCallback((current: Pedido[], incoming: Pedido[]) => {
+    const map = new Map(current.map(p => [p.id, p]));
+    for (const pedido of incoming) {
+      map.set(pedido.id, pedido);
+    }
+    return [...map.values()].sort((a, b) => Number(b.id) - Number(a.id));
+  }, []);
+
   const fetchOrders = useCallback(async (silent = false) => {
     if (silent) setSilentLoading(true);
     else setLoading(true);
 
     try {
-      const data = await getAllPedidos();
-      const ordersArray = Array.isArray(data) ? data : (data as any).rows || [];
-      const sorted = [...ordersArray].sort((a, b) => Number(b.id) - Number(a.id));
+      const params: Record<string, string | number | boolean> = { limit: 200 };
+      if (dateRange.start) params.startDate = dateRange.start;
+      if (dateRange.end) params.endDate = dateRange.end;
+      if (statusFilter !== 'todos') params.status = statusFilter;
+
+      const data = await getPedidos(params);
+      const sorted = [...data.rows].sort((a, b) => Number(b.id) - Number(a.id));
       const currentIds = new Set(sorted.map(p => p.id));
       
       if (!isInitialLoad.current && lastOrderIds.current.size > 0) {
@@ -104,6 +118,7 @@ export default function OrderManagment({ isDarkMode, toggleTheme }: Props) {
 
       lastOrderIds.current = currentIds;
       isInitialLoad.current = false;
+      lastPollTime.current = new Date().toISOString();
       setPedidos(sorted);
     } catch (error) {
       console.error(error);
@@ -111,13 +126,46 @@ export default function OrderManagment({ isDarkMode, toggleTheme }: Props) {
       setLoading(false);
       setSilentLoading(false);
     }
-  }, [playNotificationSound]);
+  }, [dateRange.start, dateRange.end, statusFilter, playNotificationSound]);
+
+  const pollOrders = useCallback(async () => {
+    setSilentLoading(true);
+    try {
+      const { rows, serverTime } = await pollPedidos(lastPollTime.current);
+      lastPollTime.current = serverTime;
+
+      if (rows.length === 0) return;
+
+      setPedidos(prev => {
+        const merged = mergePedidos(prev, rows);
+        const newOrders = rows.filter(p => !lastOrderIds.current.has(p.id));
+
+        if (!isInitialLoad.current && newOrders.length > 0) {
+          playNotificationSound();
+          toast.info('🔔 Novo pedido recebido!', { autoClose: 5000 });
+          localStorage.setItem(UNREAD_ORDERS_KEY, 'true');
+          window.dispatchEvent(new Event('storage-update'));
+          setHasUnread(true);
+        }
+
+        lastOrderIds.current = new Set(merged.map(p => p.id));
+        return merged;
+      });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setSilentLoading(false);
+    }
+  }, [mergePedidos, playNotificationSound]);
 
   useEffect(() => {
     fetchOrders();
-    const interval = setInterval(() => fetchOrders(true), 15000);
-    return () => clearInterval(interval);
   }, [fetchOrders]);
+
+  useEffect(() => {
+    const interval = setInterval(() => pollOrders(), 15000);
+    return () => clearInterval(interval);
+  }, [pollOrders]);
 
   const filteredPedidos = useMemo(() => {
     return pedidos.filter(p => {
@@ -149,6 +197,25 @@ export default function OrderManagment({ isDarkMode, toggleTheme }: Props) {
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, statusFilter, dateRange]);
+
+  const openOrderDetails = async (id: number) => {
+    const cached = pedidos.find(p => p.id === id);
+    if (cached?.itensPedido?.length) {
+      setSelectedPedido(cached);
+      return;
+    }
+
+    setLoadingPedidoDetail(true);
+    try {
+      const fullPedido = await getPedidoById(id);
+      setSelectedPedido(fullPedido);
+    } catch (error) {
+      console.error(error);
+      toast.error('Não foi possível carregar os detalhes do pedido.');
+    } finally {
+      setLoadingPedidoDetail(false);
+    }
+  };
 
   const clearFilters = () => {
     setSearchTerm('');
@@ -248,10 +315,10 @@ export default function OrderManagment({ isDarkMode, toggleTheme }: Props) {
                 <>
                   {viewMode === 'table' ? (
                     <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden overflow-x-auto transition-colors">
-                      <OrderList pedidos={currentPedidos} onViewDetails={(id) => setSelectedPedido(pedidos.find(p => p.id === id) || null)} />
+                      <OrderList pedidos={currentPedidos} onViewDetails={openOrderDetails} />
                     </div>
                   ) : (
-                    <OrderGrid pedidos={currentPedidos} onViewDetails={(id) => setSelectedPedido(pedidos.find(p => p.id === id) || null)} />
+                    <OrderGrid pedidos={currentPedidos} onViewDetails={openOrderDetails} />
                   )}
 
                   {totalPages > 1 && (
@@ -278,6 +345,12 @@ export default function OrderManagment({ isDarkMode, toggleTheme }: Props) {
           </div>
         </div>
       </main>
+
+      {loadingPedidoDetail && (
+        <div className="fixed inset-0 z-[120] bg-black/40 flex items-center justify-center">
+          <RefreshCw className="animate-spin text-white" size={32} />
+        </div>
+      )}
 
       {selectedPedido && (
         <OrderDetail pedido={selectedPedido} onClose={() => setSelectedPedido(null)} onStatusUpdate={() => fetchOrders(true)} />

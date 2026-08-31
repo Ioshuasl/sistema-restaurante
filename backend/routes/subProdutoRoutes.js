@@ -4,6 +4,7 @@ import cors from 'cors';
 import { isAdmin, authenticateToken } from '../middlewares/authMiddleware.js';
 import { validate } from '../middlewares/validationMiddleware.js';
 import { createSubProdutoSchema, updateSubProdutoSchema } from '../validators/subProdutoValidator.js';
+import { invalidateMenuCache } from '../utils/publicCache.js';
 
 const subProdutoRoutes = express.Router();
 
@@ -16,6 +17,7 @@ subProdutoRoutes.post('/subproduto', authenticateToken, isAdmin, validate(create
 
     try {
         const subproduto = await subProdutoController.createSubProduto({ nomeSubProduto, valorAdicional, isAtivo, produto_id });
+        invalidateMenuCache();
         return res.status(200).json(subproduto);
     } catch (error) {
         console.error(error);
@@ -67,6 +69,7 @@ subProdutoRoutes.put('/subproduto/:id', authenticateToken, isAdmin, validate(upd
 
     try {
         const subproduto = await subProdutoController.updateSubProduto(id, { nomeSubProduto, valorAdicional, isAtivo, produto_id });
+        invalidateMenuCache();
         return res.status(200).json(subproduto);
     } catch (error) {
         console.error(error);
@@ -80,6 +83,7 @@ subProdutoRoutes.delete('/subproduto/:id', authenticateToken, isAdmin, async (re
 
     try {
         const subproduto = await subProdutoController.deleteSubProduto(id);
+        invalidateMenuCache();
         return res.status(200).json(subproduto);
     } catch (error) {
         console.error(error);
@@ -93,6 +97,7 @@ subProdutoRoutes.put('/subproduto/:id/toggle', authenticateToken, isAdmin, async
 
     try {
         const subproduto = await subProdutoController.toggleSubProdutoAtivo(id);
+        invalidateMenuCache();
         return res.status(200).json(subproduto);
     } catch (error) {
         console.error(error);

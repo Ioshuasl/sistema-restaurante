@@ -5,6 +5,7 @@ import { isAdmin, authenticateToken } from '../middlewares/authMiddleware.js';
 import { validate } from '../middlewares/validationMiddleware.js';
 // Os nomes dos schemas importados continuam os mesmos
 import { createProdutoSchema, updateProdutoSchema } from '../validators/produtoValidator.js';
+import { invalidateMenuCache } from '../utils/publicCache.js';
 
 const produtoRoutes = express.Router();
 
@@ -21,6 +22,7 @@ produtoRoutes.post('/produto', authenticateToken, isAdmin, validate(createProdut
         // --- ALTERAÇÃO AQUI ---
         // Passa 'gruposOpcoes' para o controller
         const produto = await produtoController.createProduto(nomeProduto, descricao, valorProduto, image, isAtivo, categoriaProduto_id, gruposOpcoes);
+        invalidateMenuCache();
         return res.status(200).json(produto);
     } catch (error) {
         console.error(error);
@@ -65,6 +67,7 @@ produtoRoutes.put('/produto/:id', authenticateToken, isAdmin, validate(updatePro
         // --- ALTERAÇÃO AQUI ---
         // Passa 'gruposOpcoes' no objeto de update
         const produto = await produtoController.updateProduto(id, { nomeProduto, descricao, valorProduto, image, isAtivo, categoriaProduto_id, gruposOpcoes });
+        invalidateMenuCache();
         return res.status(200).json(produto);
     } catch (error) {
         console.error(error);
@@ -79,6 +82,7 @@ produtoRoutes.delete('/produto/:id', authenticateToken, isAdmin, async (req, res
 
     try {
         const produto = await produtoController.deleteProduto(id);
+        invalidateMenuCache();
         return res.status(200).json(produto);
     } catch (error) {
         console.error(error);
@@ -93,6 +97,7 @@ produtoRoutes.put('/produto/:id/toggle', authenticateToken, isAdmin, async (req,
 
     try {
         const produto = await produtoController.toggleProdutoAtivo(id);
+        invalidateMenuCache();
         return res.status(200).json(produto);
     } catch (error) {
         console.error(error);
