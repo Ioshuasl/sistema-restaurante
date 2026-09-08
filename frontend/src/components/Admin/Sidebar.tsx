@@ -44,7 +44,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isDarkMode, toggleTheme, isOpen, onCl
   }, []);
 
   const handleLogout = () => {
-    localStorage.clear();
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     navigate('/login');
   };
 

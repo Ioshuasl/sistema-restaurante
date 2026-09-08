@@ -70,9 +70,14 @@ export default function Config({ isDarkMode, toggleTheme }: { isDarkMode: boolea
             await updateConfig({ ...configData, taxaEntrega: taxa || 0 });
             setSyncStatus('synced');
             setLastSaved(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-        } catch (error) { 
+        } catch (error: any) { 
             setSyncStatus('error');
-            toast.error("Erro ao sincronizar ajustes.");
+            const details = error?.response?.data?.details;
+            const message =
+              error?.response?.data?.message ||
+              (Array.isArray(details) ? details.join(' | ') : null) ||
+              "Erro ao sincronizar ajustes.";
+            toast.error(message);
         }
     }, [configData]);
 

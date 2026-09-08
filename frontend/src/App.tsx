@@ -14,6 +14,7 @@ import OrderManagment from "./pages/Admin/Order/Order-Managment";
 import ProductManagment from "./pages/Admin/Product/Product-Managment";
 import UserManagment from "./pages/Admin/Users/User-Managment"
 import Config from "./pages/Admin/Config/Config"
+import RequireAuth from "./components/Admin/RequireAuth";
 
 // Constants for Storage
 const CART_STORAGE_KEY = 'gs-sabores-cart-v2';
@@ -144,12 +145,12 @@ export default function App() {
         <Route path="/pedido-confirmado" element={<PedidoConfirmado />} />
         <Route path="/login" element={<Login />} />
         
-        {/* Admin Routes */}
-        <Route path="/admin/dashboard" element={<Dashboard isDarkMode={isDarkMode} toggleTheme={toggleTheme} />} />
-        <Route path="/admin/order" element={<OrderManagment isDarkMode={isDarkMode} toggleTheme={toggleTheme} />} />
-        <Route path="/admin/product" element={<ProductManagment isDarkMode={isDarkMode} toggleTheme={toggleTheme} />} />
-        <Route path="/admin/user/consult" element={<UserManagment isDarkMode={isDarkMode} toggleTheme={toggleTheme} />} />
-        <Route path="/admin/config" element={<Config isDarkMode={isDarkMode} toggleTheme={toggleTheme} />} />
+        {/* Admin Routes — exigem JWT válido */}
+        <Route path="/admin/dashboard" element={<RequireAuth><Dashboard isDarkMode={isDarkMode} toggleTheme={toggleTheme} /></RequireAuth>} />
+        <Route path="/admin/order" element={<RequireAuth><OrderManagment isDarkMode={isDarkMode} toggleTheme={toggleTheme} /></RequireAuth>} />
+        <Route path="/admin/product" element={<RequireAuth requireAdmin><ProductManagment isDarkMode={isDarkMode} toggleTheme={toggleTheme} /></RequireAuth>} />
+        <Route path="/admin/user/consult" element={<RequireAuth requireAdmin><UserManagment isDarkMode={isDarkMode} toggleTheme={toggleTheme} /></RequireAuth>} />
+        <Route path="/admin/config" element={<RequireAuth requireAdmin><Config isDarkMode={isDarkMode} toggleTheme={toggleTheme} /></RequireAuth>} />
       </Routes>
       <ToastContainer position="bottom-right" theme={isDarkMode ? 'dark' : 'light'} />
     </>

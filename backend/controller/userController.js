@@ -130,7 +130,7 @@ class UserController {
                 id: user.id,
                 username: user.username,
                 cargo: user.Cargo.nome,
-                admin: user.Cargo.admin
+                admin: Boolean(user.Cargo.admin)
             };
 
             // 3. Assine o token com seu segredo e defina um tempo de expiração
@@ -148,7 +148,7 @@ class UserController {
                     nome: user.nome,
                     username: user.username,
                     cargo: user.Cargo.nome,
-                    admin: user.Cargo.admin
+                    admin: Boolean(user.Cargo.admin)
                 },
                 token: token
             };

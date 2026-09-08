@@ -19,8 +19,8 @@ export function authenticateToken(req, res, next) {
 }
 
 export function isAdmin(req, res, next) {
-    // Se authenticateToken rodou antes, req.user já existe
-    if (req.user && req.user.admin === true) {
+    // Aceita boolean true ou equivalentes vindos do JWT/DB (1, "true")
+    if (req.user && (req.user.admin === true || req.user.admin === 1 || req.user.admin === 'true')) {
         return next();
     }
     

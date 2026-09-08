@@ -35,7 +35,13 @@ export const handleIncomingMessage = async (req, res) => {
     console.log(`📡 Evento: ${event}`);
     console.log(`🤖 Instância (Webhook): ${instance}`);
 
-    if (event !== 'messages.upsert') {
+    // Evolution envia "messages.upsert" (legado) ou "MESSAGES_UPSERT" (v2)
+    const normalizedEvent = String(event || '')
+      .trim()
+      .toLowerCase()
+      .replace(/_/g, '.');
+
+    if (normalizedEvent !== 'messages.upsert') {
       return res.status(200).send('Evento ignorado');
     }
 
