@@ -46,6 +46,7 @@ export default function Config({ isDarkMode, toggleTheme }: { isDarkMode: boolea
 
     const isFirstLoad = useRef(true);
     const debounceTimer = useRef<number | null>(null);
+    const skipNextAutosave = useRef(false);
 
     // --- FUNÇÃO DE SCROLL DO CARROSSEL ---
     const scrollTabs = (direction: 'left' | 'right') => {
@@ -67,7 +68,17 @@ export default function Config({ isDarkMode, toggleTheme }: { isDarkMode: boolea
                 ? parseFloat(configData.taxaEntrega.replace(/\./g, '').replace(',', '.')) 
                 : configData.taxaEntrega;
 
-            await updateConfig({ ...configData, taxaEntrega: taxa || 0 });
+            const saved = await updateConfig({ ...configData, taxaEntrega: taxa || 0 });
+            // Evita loop: atualizar o state com a resposta não deve disparar novo save
+            skipNextAutosave.current = true;
+            setConfigData((prev: any) => ({
+                ...prev,
+                ...saved,
+                taxaEntrega:
+                  saved?.taxaEntrega != null
+                    ? String(saved.taxaEntrega).replace('.', ',')
+                    : prev?.taxaEntrega,
+            }));
             setSyncStatus('synced');
             setLastSaved(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
         } catch (error: any) { 
@@ -110,6 +121,10 @@ export default function Config({ isDarkMode, toggleTheme }: { isDarkMode: boolea
 
     useEffect(() => {
         if (isFirstLoad.current) return;
+        if (skipNextAutosave.current) {
+            skipNextAutosave.current = false;
+            return;
+        }
         if (debounceTimer.current) clearTimeout(debounceTimer.current);
         debounceTimer.current = window.setTimeout(triggerSave, 1500) as any;
         return () => { if (debounceTimer.current) clearTimeout(debounceTimer.current); };

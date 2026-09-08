@@ -71,13 +71,21 @@ class ConfigController {
                 throw new Error("Registro de configuração não encontrado através do id.");
             }
 
-            const updatedConfig = await config.update(updatedData);
+            // Evita validação isUrl do Sequelize com string vazia
+            if (Object.prototype.hasOwnProperty.call(updatedData, 'bannerImage')) {
+                if (updatedData.bannerImage === '' || updatedData.bannerImage === undefined) {
+                    updatedData.bannerImage = null;
+                }
+            }
 
-            return normalizeConfigAssets(updatedConfig);
+            await config.update(updatedData);
+            await config.reload();
+
+            return normalizeConfigAssets(config);
 
         } catch (error) {
             console.error(error);
-            return error;
+            throw error;
         }
     }
 

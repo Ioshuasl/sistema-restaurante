@@ -131,7 +131,16 @@ const Config = sequelize.define('config', {
         type: DataTypes.STRING,
         allowNull: true,
         validate: {
-            isUrl: true // Opcional: Garante que seja uma URL válida se preenchido
+            isValidBanner(value) {
+                if (value == null || value === '') return;
+                // Aceita URL absoluta ou caminho relativo de upload
+                const ok =
+                    /^https?:\/\//i.test(value) ||
+                    value.startsWith('/uploads/');
+                if (!ok) {
+                    throw new Error('bannerImage deve ser uma URL ou caminho /uploads/…');
+                }
+            }
         }
     },
     horariosFuncionamento: {

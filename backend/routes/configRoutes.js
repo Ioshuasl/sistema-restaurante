@@ -5,7 +5,7 @@ import { isAdmin, authenticateToken } from '../middlewares/authMiddleware.js'
 import { validate } from "../middlewares/validationMiddleware.js";
 import { updateConfigSchema } from "../validators/configValidator.js";
 import { cacheGet, cacheSet } from '../utils/cache.js';
-import { setPublicCache } from '../middlewares/cacheHeaders.js';
+import { setNoCache } from '../middlewares/cacheHeaders.js';
 import { invalidateConfigCache, invalidateMenuCache } from '../utils/publicCache.js';
 
 const configRoutes = express.Router()
@@ -14,7 +14,7 @@ const CONFIG_CACHE_TTL = 120;
 
 configRoutes.use(cors());
 
-configRoutes.get('/config', setPublicCache(60), async (req, res) => {
+configRoutes.get('/config', setNoCache, async (req, res) => {
     try {
         const cached = cacheGet(CONFIG_CACHE_KEY);
         if (cached) {
@@ -32,7 +32,7 @@ configRoutes.get('/config', setPublicCache(60), async (req, res) => {
     }
 })
 
-configRoutes.put('/config', authenticateToken, isAdmin, validate(updateConfigSchema), async (req, res) => {
+configRoutes.put('/config', authenticateToken, isAdmin, validate(updateConfigSchema), setNoCache, async (req, res) => {
 
     const updatedData = req.body
 
@@ -40,10 +40,13 @@ configRoutes.put('/config', authenticateToken, isAdmin, validate(updateConfigSch
         const config = await configController.updateConfig(1, updatedData)
         invalidateConfigCache();
         invalidateMenuCache();
+        // Garante resposta fresca e evita CDN/browser devolver GET antigo
+        cacheSet(CONFIG_CACHE_KEY, config, CONFIG_CACHE_TTL);
         return res.status(200).json(config)
     } catch (error) {
         console.error(error)
-        return res.status(400).send(error)
+        const message = error?.message || 'Erro ao atualizar configuração.';
+        return res.status(400).json({ message });
     }
 })
 

@@ -2,7 +2,13 @@ import api from './api';
 import { type Config, type UpdateConfigPayload } from '../types/interfaces-types';
 
 export const getConfig = async (): Promise<Config> => {
-  const response = await api.get('/config');
+  const response = await api.get('/config', {
+    headers: {
+      'Cache-Control': 'no-cache',
+      Pragma: 'no-cache',
+    },
+    params: { _ts: Date.now() },
+  });
   return response.data;
 };
 
@@ -43,6 +49,11 @@ export const updateConfig = async (payload: UpdateConfigPayload): Promise<Config
       (body as any)[key] = payload[key];
     }
   }
-  const response = await api.put('/config', body);
+  const response = await api.put('/config', body, {
+    headers: {
+      'Cache-Control': 'no-cache',
+      Pragma: 'no-cache',
+    },
+  });
   return response.data;
 };
