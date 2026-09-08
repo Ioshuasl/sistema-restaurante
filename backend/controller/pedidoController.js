@@ -141,13 +141,20 @@ class PedidoController {
                 }
 
                 const precoProduto = Number(produto.valorProduto);
-                const subtotalProduto = precoProduto * item.quantidade;
+                if (!Number.isFinite(precoProduto)) {
+                    throw new Error(`Preço inválido para o produto ID ${item.produtoId}.`);
+                }
+                const quantidade = Number(item.quantidade);
+                if (!Number.isFinite(quantidade) || quantidade <= 0) {
+                    throw new Error(`Quantidade inválida para o produto ID ${item.produtoId}.`);
+                }
+                const subtotalProduto = precoProduto * quantidade;
                 valorTotalCalculado += subtotalProduto;
 
                 const itemPedido = await ItemPedido.create({
                     pedidoId: pedido.id,
                     produtoId: item.produtoId,
-                    quantidade: item.quantidade,
+                    quantidade,
                     precoUnitario: precoProduto,
                     observacaoItem: item.observacaoItem
                 }, { transaction: t });
@@ -161,21 +168,27 @@ class PedidoController {
                         }
 
                         const precoSub = Number(subProduto.valorAdicional) || 0;
-                        const subtotalSub = precoSub * sub.quantidade;
+                        const qtdSub = Number(sub.quantidade) || 0;
+                        const subtotalSub = precoSub * qtdSub;
                         valorTotalCalculado += subtotalSub;
 
                         await SubItemPedido.create({
                             itemPedidoId: itemPedido.id,
                             subProdutoId: sub.subProdutoId,
-                            quantidade: sub.quantidade,
+                            quantidade: qtdSub,
                             precoAdicional: precoSub
                         }, { transaction: t });
                     }
                 }
             }
 
-            // 6. Adiciona taxa de entrega
-            valorTotalCalculado += Number(taxaEntrega);
+            // 6. Adiciona taxa de entrega (evita NaN quando o campo vier undefined/inválido)
+            const taxa = Number(taxaEntrega);
+            valorTotalCalculado += Number.isFinite(taxa) ? taxa : 0;
+
+            if (!Number.isFinite(valorTotalCalculado)) {
+                throw new Error("Falha ao calcular o valor total do pedido.");
+            }
 
             // 7. Atualiza total do pedido
             pedido.valorTotalPedido = valorTotalCalculado;

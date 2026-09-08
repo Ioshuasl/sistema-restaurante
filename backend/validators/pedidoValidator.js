@@ -66,11 +66,31 @@ export const createPedidoSchema = yup.object({
 
     observacao: yup.string().nullable(),
 
+    // Precisa estar no schema: o middleware usa stripUnknown:true e remove campos ausentes.
+    // Sem isso, taxaEntrega chega undefined e Number(undefined) vira NaN no total.
+    taxaEntrega: yup.number()
+        .min(0, "A taxa de entrega não pode ser negativa.")
+        .default(0)
+        .transform((value, originalValue) =>
+            originalValue === '' || originalValue === null || originalValue === undefined
+                ? 0
+                : value
+        ),
+
+    tipoLogadouroCliente: yup.string().nullable(),
+    tempoEspera: yup.string().nullable(),
+
     produtosPedido: yup.array().of(
         yup.object({
             produtoId: yup.number().required().integer().positive(),
             quantidade: yup.number().required().integer().positive(),
-            observacaoItem: yup.string().nullable()
+            observacaoItem: yup.string().nullable(),
+            subProdutos: yup.array().of(
+                yup.object({
+                    subProdutoId: yup.number().required().integer().positive(),
+                    quantidade: yup.number().required().integer().positive()
+                })
+            ).default([])
         })
     ).min(1, "O pedido deve conter pelo menos um item.").required()
 });
