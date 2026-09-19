@@ -59,7 +59,10 @@ class MenuController {
                     const produtos = (cat.Produtos || cat.produtos || []).filter((p) =>
                         pertenceAoMenu(p.tipoMenu, tipoSolicitado)
                     );
-                    return { ...cat, Produtos: produtos, produtos };
+                    const rest = { ...cat };
+                    delete rest.produtos;
+                    rest.Produtos = produtos;
+                    return rest;
                 })
                 .filter((cat) => cat.Produtos.length > 0);
 

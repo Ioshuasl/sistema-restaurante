@@ -68,7 +68,8 @@ export function normalizeMenuCategories(categories) {
 
         return {
             ...category,
-            [produtosKey]: category[produtosKey].map(normalizeProductImage),
+            Produtos: category[produtosKey].map(normalizeProductImage),
+            produtos: undefined,
         };
     });
 }
