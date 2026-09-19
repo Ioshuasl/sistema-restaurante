@@ -46,12 +46,24 @@ class ConfigController {
                     borderRadius: '16px',
                     showBanner: false,
                     bannerImage: null,
-                    horariosFuncionamento: defaultHorarios
+                    horariosFuncionamento: defaultHorarios,
+                    periodosCardapio: {
+                        dia: { inicio: "11:00", fim: "15:00" },
+                        noite: { inicio: "18:00", fim: "23:00" }
+                    }
                 }
             });
 
             if (created) {
                 console.log("Registro de configuração inicial criado com sucesso");
+            } else if (!config.periodosCardapio) {
+                await config.update({
+                    periodosCardapio: {
+                        dia: { inicio: "11:00", fim: "15:00" },
+                        noite: { inicio: "18:00", fim: "23:00" }
+                    }
+                });
+                await config.reload();
             }
 
             return normalizeConfigAssets(config);

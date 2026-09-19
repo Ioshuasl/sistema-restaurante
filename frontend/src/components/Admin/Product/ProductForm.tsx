@@ -19,7 +19,8 @@ import {
     type Produto, 
     type CategoriaProduto, 
     type GrupoOpcaoPayload,
-    type OpcaoPayload
+    type OpcaoPayload,
+    type TipoMenu
 } from '../../../types/interfaces-types';
 import { getAllCategoriasProdutos } from '../../../services/categoriaProdutoService';
 import { createProduto, updateProduto } from '../../../services/produtoService';
@@ -33,6 +34,12 @@ interface ProductFormProps {
   onSuccess: () => void;
 }
 
+const TIPO_MENU_LABELS: Record<TipoMenu, string> = {
+  dia: 'Almoço (Dia)',
+  noite: 'Jantar (Noite)',
+  ambos: 'Ambos',
+};
+
 const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSuccess }) => {
   const [nome, setNome] = useState(product?.nomeProduto || '');
   const [preco, setPreco] = useState(product?.valorProduto?.toString().replace('.', ',') || '');
@@ -40,6 +47,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSuccess }
   const [descricao, setDescricao] = useState(product?.descricao || '');
   const [categoriaId, setCategoriaId] = useState(product?.categoriaProduto_id?.toString() || '');
   const [isAtivo, setIsAtivo] = useState(product?.isAtivo ?? true);
+  const [tipoMenu, setTipoMenu] = useState<TipoMenu>(product?.tipoMenu || 'ambos');
   const [isUploading, setIsUploading] = useState(false);
   
   const [grupos, setGrupos] = useState<GrupoOpcaoPayload[]>(() => {
@@ -213,6 +221,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSuccess }
       image: image,
       descricao: descricao,
       isAtivo: isAtivo,
+      tipoMenu,
       categoriaProduto_id: Number(categoriaId),
       gruposOpcoes: gruposLimpos
     };
@@ -299,6 +308,23 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onClose, onSuccess }
                           {categorias.map(cat => <option key={cat.id} value={cat.id}>{cat.nomeCategoriaProduto}</option>)}
                       </select>
                     </div>
+                  </div>
+
+                  <div>
+                    <label className={labelClasses}>Cardápio *</label>
+                    <select
+                      className={inputClasses}
+                      required
+                      value={tipoMenu}
+                      onChange={(e) => setTipoMenu(e.target.value as TipoMenu)}
+                    >
+                      {(Object.keys(TIPO_MENU_LABELS) as TipoMenu[]).map((key) => (
+                        <option key={key} value={key}>{TIPO_MENU_LABELS[key]}</option>
+                      ))}
+                    </select>
+                    <p className="mt-1.5 ml-1 text-[10px] text-slate-400 font-medium">
+                      Almoço = marmitas · Jantar = espetinhos · Ambos aparece nos dois
+                    </p>
                   </div>
 
                   <div>

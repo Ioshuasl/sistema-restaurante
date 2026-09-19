@@ -1,10 +1,15 @@
-import { cacheDel } from './cache.js';
+import { cacheDel, cacheDelByPrefix } from './cache.js';
 
-const MENU_CACHE_KEY = 'menu:v1';
+export const MENU_CACHE_PREFIX = 'menu:v1';
 const CONFIG_CACHE_KEY = 'config:v1';
 
+export function menuCacheKey(tipo) {
+    return `${MENU_CACHE_PREFIX}:${tipo}`;
+}
+
 export function invalidateMenuCache() {
-    cacheDel(MENU_CACHE_KEY);
+    cacheDelByPrefix(`${MENU_CACHE_PREFIX}:`);
+    cacheDel(MENU_CACHE_PREFIX); // legado menu:v1
 }
 
 export function invalidateConfigCache() {

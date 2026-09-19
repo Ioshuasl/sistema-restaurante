@@ -157,6 +157,15 @@ const Config = sequelize.define('config', {
         ],
         comment: "Armazena o array de objetos com os horários de cada dia da semana"
     },
+    periodosCardapio: {
+        type: DataTypes.JSONB,
+        allowNull: false,
+        defaultValue: {
+            dia: { inicio: "11:00", fim: "15:00" },
+            noite: { inicio: "18:00", fim: "23:00" }
+        },
+        comment: "Horários em que cada cardápio (dia/noite) está ativo para pedidos"
+    },
 }, {
     tableName: 'config',
     timestamps: true

@@ -41,7 +41,7 @@ function serializeProdutoList(result) {
 class ProdutoController {
 
     // --- FUNÇÃO createProduto REFATORADA E CORRIGIDA ---
-    async createProduto(nomeProduto, descricao, valorProduto, image, isAtivo, categoriaProduto_id, gruposOpcoes = []) {
+    async createProduto(nomeProduto, descricao, valorProduto, image, isAtivo, categoriaProduto_id, gruposOpcoes = [], tipoMenu = 'ambos') {
         
         // Inicia uma transação
         const t = await sequelize.transaction();
@@ -61,7 +61,8 @@ class ProdutoController {
                 descricao,
                 image,
                 isAtivo,
-                categoriaProduto_id
+                categoriaProduto_id,
+                tipoMenu: tipoMenu || 'ambos',
             }, { transaction: t });
 
             // 3. Criar os grupos e suas opções (subprodutos)

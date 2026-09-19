@@ -96,7 +96,7 @@ export default function CartDrawer({ isOpen, onClose, cart, onIncrement, onDecre
                                     borderRadius: 'var(--app-border-radius, 1rem)'
                                 }}
                             >
-                                {isDisabled ? 'Loja Fechada' : 'Ir para Checkout'}
+                                {isDisabled ? 'Pedidos indisponíveis' : 'Ir para Checkout'}
                                 <ArrowRight size={20} />
                             </button>
                         </div>

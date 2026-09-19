@@ -30,6 +30,7 @@ export const createProdutoSchema = yup.object({
     image: yup.string().required("A imagem do produto é obrigatória."),
     isAtivo: yup.boolean().default(true),
     categoriaProduto_id: yup.number().required("A categoria é obrigatória.").integer(),
+    tipoMenu: yup.string().oneOf(['dia', 'noite', 'ambos']).default('ambos'),
     
     // --- ALTERAÇÃO AQUI ---
     // Trocamos 'subprodutos' por 'gruposOpcoes'
@@ -45,6 +46,7 @@ export const updateProdutoSchema = yup.object({
     image: yup.string(),
     isAtivo: yup.boolean(),
     categoriaProduto_id: yup.number().integer(),
+    tipoMenu: yup.string().oneOf(['dia', 'noite', 'ambos']),
 
     // --- ALTERAÇÃO AQUI ---
     // Trocamos 'subprodutos' por 'gruposOpcoes'

@@ -28,6 +28,12 @@ const Produto = sequelize.define('produtos',{
     isAtivo: {
         type: DataTypes.BOOLEAN
     },
+    tipoMenu: {
+        type: DataTypes.ENUM('dia', 'noite', 'ambos'),
+        allowNull: false,
+        defaultValue: 'ambos',
+        comment: 'Cardápio: dia (marmitas), noite (espetinhos) ou ambos'
+    },
     categoriaProduto_id: {
         type: DataTypes.INTEGER,
         references: {

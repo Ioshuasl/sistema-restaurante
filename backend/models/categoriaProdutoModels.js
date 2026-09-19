@@ -11,6 +11,12 @@ const CategoriaProduto = sequelize.define('categoria_produtos',{
     nomeCategoriaProduto: {
         type: DataTypes.STRING,
         allowNull: false
+    },
+    tipoMenu: {
+        type: DataTypes.ENUM('dia', 'noite', 'ambos'),
+        allowNull: false,
+        defaultValue: 'ambos',
+        comment: 'Cardápio: dia, noite ou ambos'
     }
 },{
     tableName: 'categoria_produtos',

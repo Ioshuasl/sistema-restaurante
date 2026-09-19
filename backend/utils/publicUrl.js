@@ -55,12 +55,22 @@ export function normalizeMenuCategories(categories) {
         return categories;
     }
 
-    return categories.map((category) => ({
-        ...category,
-        produtos: Array.isArray(category.produtos)
-            ? category.produtos.map(normalizeProductImage)
-            : category.produtos,
-    }));
+    return categories.map((category) => {
+        const produtosKey = Array.isArray(category.Produtos)
+            ? 'Produtos'
+            : Array.isArray(category.produtos)
+              ? 'produtos'
+              : null;
+
+        if (!produtosKey) {
+            return category;
+        }
+
+        return {
+            ...category,
+            [produtosKey]: category[produtosKey].map(normalizeProductImage),
+        };
+    });
 }
 
 export function normalizeConfigAssets(config) {

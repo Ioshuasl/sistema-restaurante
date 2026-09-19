@@ -16,12 +16,12 @@ produtoRoutes.use(cors());
 produtoRoutes.post('/produto', authenticateToken, isAdmin, validate(createProdutoSchema), async (req, res) => {
     // --- ALTERAÇÃO AQUI ---
     // Destrutura 'gruposOpcoes' ao invés de 'subprodutos'
-    const { nomeProduto, descricao, valorProduto, image, isAtivo, categoriaProduto_id, gruposOpcoes } = req.body;
+    const { nomeProduto, descricao, valorProduto, image, isAtivo, categoriaProduto_id, gruposOpcoes, tipoMenu } = req.body;
 
     try {
         // --- ALTERAÇÃO AQUI ---
         // Passa 'gruposOpcoes' para o controller
-        const produto = await produtoController.createProduto(nomeProduto, descricao, valorProduto, image, isAtivo, categoriaProduto_id, gruposOpcoes);
+        const produto = await produtoController.createProduto(nomeProduto, descricao, valorProduto, image, isAtivo, categoriaProduto_id, gruposOpcoes, tipoMenu);
         invalidateMenuCache();
         return res.status(200).json(produto);
     } catch (error) {
@@ -61,12 +61,12 @@ produtoRoutes.put('/produto/:id', authenticateToken, isAdmin, validate(updatePro
     const { id } = req.params;
     // --- ALTERAÇÃO AQUI ---
     // Destrutura 'gruposOpcoes' ao invés de 'subprodutos'
-    const { nomeProduto, descricao, valorProduto, image, isAtivo, categoriaProduto_id, gruposOpcoes } = req.body;
+    const { nomeProduto, descricao, valorProduto, image, isAtivo, categoriaProduto_id, gruposOpcoes, tipoMenu } = req.body;
 
     try {
         // --- ALTERAÇÃO AQUI ---
         // Passa 'gruposOpcoes' no objeto de update
-        const produto = await produtoController.updateProduto(id, { nomeProduto, descricao, valorProduto, image, isAtivo, categoriaProduto_id, gruposOpcoes });
+        const produto = await produtoController.updateProduto(id, { nomeProduto, descricao, valorProduto, image, isAtivo, categoriaProduto_id, gruposOpcoes, tipoMenu });
         invalidateMenuCache();
         return res.status(200).json(produto);
     } catch (error) {

@@ -1,13 +1,21 @@
 
-import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import Header from '../../../components/Public/Header';
 import CartDrawer from '../../../components/Public/CartDrawer';
 import OptionsModal from '../../../components/Public/OptionsModal';
 import { getMenu } from '../../../services/menuService';
 import { getConfig } from '../../../services/configService';
-import { type Menu, type Produto, type CartItem, type SubProduto, type Config, type HorarioDia } from '../../../types/interfaces-types';
-import { Loader2, WifiOff, SearchX, Plus, ChevronRight, Info, Clock, AlertCircle } from 'lucide-react';
+import {
+    type Menu,
+    type Produto,
+    type CartItem,
+    type SubProduto,
+    type Config,
+    type MenuMeta,
+} from '../../../types/interfaces-types';
+import { WifiOff, SearchX, Plus, AlertCircle, Eye, Sun, Moon } from 'lucide-react';
 import { normalizeImageUrl } from '../../../utils/normalizeImageUrl';
+import { toast } from 'react-toastify';
 
 interface CardapioProps {
     cart: CartItem[];
@@ -17,9 +25,19 @@ interface CardapioProps {
     onCheckout: () => void;
 }
 
+type TipoVisualizado = 'dia' | 'noite';
+
+function produtoPodePedir(tipoMenu: string | undefined, tipoAtivo: TipoVisualizado | null) {
+    if (!tipoAtivo) return false;
+    const t = tipoMenu || 'ambos';
+    return t === 'ambos' || t === tipoAtivo;
+}
+
 export default function Cardapio({ cart, setCart, isDarkMode, toggleTheme, onCheckout }: CardapioProps) {
     const [menuData, setMenuData] = useState<Menu[]>([]);
     const [config, setConfig] = useState<Config | null>(null);
+    const [menuMeta, setMenuMeta] = useState<MenuMeta | null>(null);
+    const [tipoVisualizado, setTipoVisualizado] = useState<TipoVisualizado>('dia');
     const [isLoading, setIsLoading] = useState(true);
     const [isOffline, setIsOffline] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -28,13 +46,14 @@ export default function Cardapio({ cart, setCart, isDarkMode, toggleTheme, onChe
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [isOptionsModalOpen, setIsOptionsModalOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<Produto | null>(null);
+    const initialTipoSet = useRef(false);
+    const lastTipoAtivo = useRef<TipoVisualizado | null | undefined>(undefined);
 
-    // Lógica de Estabelecimento Aberto
     const isStoreOpen = useMemo(() => {
         if (!config?.horariosFuncionamento || config.horariosFuncionamento.length === 0) return true;
         
         const agora = new Date();
-        const diaSemana = agora.getDay(); // 0-6
+        const diaSemana = agora.getDay();
         const horaMinuto = agora.getHours() * 60 + agora.getMinutes();
         
         const configHoje = config.horariosFuncionamento.find(h => h.dia === diaSemana);
@@ -47,7 +66,6 @@ export default function Cardapio({ cart, setCart, isDarkMode, toggleTheme, onChe
         const inicioMinutos = hIni * 60 + mIni;
         const fimMinutos = hFim * 60 + mFim;
 
-        // Caso o horário de fechamento seja após a meia-noite (ex: 18:00 às 02:00)
         if (fimMinutos < inicioMinutos) {
             return horaMinuto >= inicioMinutos || horaMinuto <= fimMinutos;
         }
@@ -55,19 +73,42 @@ export default function Cardapio({ cart, setCart, isDarkMode, toggleTheme, onChe
         return horaMinuto >= inicioMinutos && horaMinuto <= fimMinutos;
     }, [config]);
 
-    const fetchData = async () => {
+    const tipoAtivo = menuMeta?.tipoAtivo ?? null;
+    const pedindoHabilitado = Boolean(
+        isStoreOpen &&
+        menuMeta?.pedindoHabilitado &&
+        tipoVisualizado === tipoAtivo
+    );
+
+    const loadMenu = useCallback(async (tipo: TipoVisualizado | 'auto') => {
+        const response = await getMenu(tipo);
+        const categorias = (response.categorias || []).map((cat: any) => ({
+            ...cat,
+            Produtos: cat.Produtos || cat.produtos || [],
+        }));
+        setMenuData(categorias);
+        setMenuMeta(response.meta);
+        return response;
+    }, []);
+
+    const fetchData = useCallback(async () => {
         try {
-            const [menu, configData] = await Promise.all([
-                getMenu(),
-                getConfig()
+            const [menuResponse, configData] = await Promise.all([
+                getMenu('auto'),
+                getConfig(),
             ]);
 
-            const normalizedMenu = menu.map((cat: any) => ({
+            const normalizedMenu = (menuResponse.categorias || []).map((cat: any) => ({
                 ...cat,
-                Produtos: cat.Produtos || cat.produtos || []
+                Produtos: cat.Produtos || cat.produtos || [],
             }));
             
             setMenuData(normalizedMenu);
+            setMenuMeta(menuResponse.meta);
+            if (!initialTipoSet.current) {
+                setTipoVisualizado(menuResponse.meta.tipoSolicitado);
+                initialTipoSet.current = true;
+            }
             setConfig(configData);
             if (configData?.menuLayout) setMenuLayout(configData.menuLayout);
             setIsOffline(false);
@@ -77,11 +118,62 @@ export default function Cardapio({ cart, setCart, isDarkMode, toggleTheme, onChe
         } finally {
             setIsLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         fetchData();
-    }, []);
+    }, [fetchData]);
+
+    // Recarrega quando o usuário troca Almoço/Jantar (pula o primeiro valor após fetch inicial)
+    const skipTipoEffect = useRef(true);
+    useEffect(() => {
+        if (skipTipoEffect.current) {
+            skipTipoEffect.current = false;
+            return;
+        }
+        let cancelled = false;
+        (async () => {
+            try {
+                const response = await getMenu(tipoVisualizado);
+                if (cancelled) return;
+                setMenuData((response.categorias || []).map((cat: any) => ({
+                    ...cat,
+                    Produtos: cat.Produtos || cat.produtos || [],
+                })));
+                setMenuMeta(response.meta);
+            } catch (err) {
+                console.error(err);
+            }
+        })();
+        return () => { cancelled = true; };
+    }, [tipoVisualizado]);
+
+    // Limpa itens incompatíveis quando o período ativo muda
+    useEffect(() => {
+        const ativo = menuMeta?.tipoAtivo ?? null;
+        if (lastTipoAtivo.current === undefined) {
+            lastTipoAtivo.current = ativo;
+            return;
+        }
+        if (lastTipoAtivo.current === ativo) return;
+        lastTipoAtivo.current = ativo;
+
+        setCart((prev) => {
+            const next = prev.filter((item) => produtoPodePedir(item.product.tipoMenu, ativo));
+            if (next.length < prev.length) {
+                toast.info('Alguns itens foram removidos do carrinho pois o cardápio mudou de período.');
+            }
+            return next;
+        });
+    }, [menuMeta?.tipoAtivo, setCart]);
+
+    // Poll leve a cada minuto para atualizar meta (pedindo habilitado)
+    useEffect(() => {
+        const id = window.setInterval(() => {
+            loadMenu(tipoVisualizado).catch(() => {});
+        }, 60_000);
+        return () => window.clearInterval(id);
+    }, [tipoVisualizado, loadMenu]);
 
     const scrollToCategory = (id: number) => {
         const element = document.getElementById(`cat-${id}`);
@@ -120,7 +212,7 @@ export default function Cardapio({ cart, setCart, isDarkMode, toggleTheme, onChe
         unitPriceWithSubProducts: number,
         observation?: string
     ) => {
-        if (!isStoreOpen) return;
+        if (!pedindoHabilitado) return;
 
         setCart(prev => {
             const subProductIds = selectedSubProducts.map(op => op.id).sort().join('-');
@@ -145,9 +237,10 @@ export default function Cardapio({ cart, setCart, isDarkMode, toggleTheme, onChe
         });
         setIsCartOpen(true);
         setIsOptionsModalOpen(false);
-    }, [setCart, isStoreOpen]);
+    }, [setCart, pedindoHabilitado]);
 
     const updateQuantity = (cartItemId: string, delta: number) => {
+        if (delta > 0 && !pedindoHabilitado) return;
         setCart(prev => 
             prev.map(item => 
                 item.cartItemId === cartItemId 
@@ -158,7 +251,14 @@ export default function Cardapio({ cart, setCart, isDarkMode, toggleTheme, onChe
     };
 
     const handleProductClick = (product: Produto) => {
-        if (!isStoreOpen) return;
+        if (!pedindoHabilitado) {
+            toast.info(
+                tipoAtivo == null
+                    ? 'Fora do horário de pedidos deste cardápio.'
+                    : 'Este cardápio está somente para visualização no momento.'
+            );
+            return;
+        }
         const hasOptions = (product.gruposOpcoes && product.gruposOpcoes.length > 0);
         if (hasOptions) {
             setSelectedProduct(product);
@@ -176,7 +276,7 @@ export default function Cardapio({ cart, setCart, isDarkMode, toggleTheme, onChe
                 <div 
                     key={product.id} 
                     onClick={() => handleProductClick(product)}
-                    className={`group bg-white dark:bg-slate-900 p-3 shadow-sm hover:shadow-md transition-all flex items-center gap-3 cursor-pointer border border-slate-100 dark:border-slate-800 ${borderRadiusClass} ${!isStoreOpen ? 'grayscale' : ''}`}
+                    className={`group bg-white dark:bg-slate-900 p-3 shadow-sm hover:shadow-md transition-all flex items-center gap-3 cursor-pointer border border-slate-100 dark:border-slate-800 ${borderRadiusClass} ${!pedindoHabilitado ? 'grayscale' : ''}`}
                 >
                     <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0">
                         <img src={normalizeImageUrl(product.image) || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200'} className="w-full h-full object-cover group-hover:scale-110 transition duration-500" alt={product.nomeProduto} />
@@ -186,7 +286,7 @@ export default function Cardapio({ cart, setCart, isDarkMode, toggleTheme, onChe
                         <p className="text-[10px] text-slate-500 dark:text-slate-400 line-clamp-1 mb-1">{product.descricao}</p>
                         <span className="text-sm font-black text-[var(--primary-color)]">R$ {Number(product.valorProduto).toFixed(2).replace('.', ',')}</span>
                     </div>
-                    {isStoreOpen && (
+                    {pedindoHabilitado && (
                         <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover:bg-[var(--primary-color)] group-hover:text-white transition-all">
                             <Plus size={16} />
                         </div>
@@ -200,7 +300,7 @@ export default function Cardapio({ cart, setCart, isDarkMode, toggleTheme, onChe
                 <div 
                     key={product.id} 
                     onClick={() => handleProductClick(product)}
-                    className={`group py-4 border-b border-slate-100 dark:border-slate-800/60 flex items-start justify-between gap-4 cursor-pointer hover:bg-slate-50/50 dark:hover:bg-slate-800/20 px-2 -mx-2 rounded-xl transition-all ${!isStoreOpen ? 'opacity-50' : ''}`}
+                    className={`group py-4 border-b border-slate-100 dark:border-slate-800/60 flex items-start justify-between gap-4 cursor-pointer hover:bg-slate-50/50 dark:hover:bg-slate-800/20 px-2 -mx-2 rounded-xl transition-all ${!pedindoHabilitado ? 'opacity-50' : ''}`}
                 >
                     <div className="flex-1">
                         <div className="flex items-baseline justify-between gap-2">
@@ -215,7 +315,7 @@ export default function Cardapio({ cart, setCart, isDarkMode, toggleTheme, onChe
         }
 
         return (
-            <div key={product.id} className={`group bg-white dark:bg-slate-900 p-4 shadow-sm hover:shadow-xl transition-all flex flex-col border border-slate-100 dark:border-slate-800 ${borderRadiusClass} ${!isStoreOpen ? 'grayscale' : ''}`}>
+            <div key={product.id} className={`group bg-white dark:bg-slate-900 p-4 shadow-sm hover:shadow-xl transition-all flex flex-col border border-slate-100 dark:border-slate-800 ${borderRadiusClass} ${!pedindoHabilitado ? 'grayscale' : ''}`}>
                 <div className="relative mb-4 overflow-hidden aspect-[5/4] rounded-2xl">
                     <img src={normalizeImageUrl(product.image) || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400'} className="w-full h-full object-cover group-hover:scale-110 transition duration-500" alt={product.nomeProduto} />
                 </div>
@@ -225,7 +325,7 @@ export default function Cardapio({ cart, setCart, isDarkMode, toggleTheme, onChe
                 </div>
                 <div className="flex items-center justify-between pt-4 border-t border-slate-50 dark:border-slate-800">
                     <span className="text-xl font-black text-slate-900 dark:text-slate-100">R$ {Number(product.valorProduto).toFixed(2).replace('.', ',')}</span>
-                    {isStoreOpen && (
+                    {pedindoHabilitado && (
                         <button 
                             onClick={() => handleProductClick(product)} 
                             className="w-10 h-10 bg-slate-100 dark:bg-slate-800 hover:bg-[var(--primary-color)] text-slate-900 dark:text-slate-100 hover:text-white rounded-xl flex items-center justify-center transition-all"
@@ -259,6 +359,8 @@ export default function Cardapio({ cart, setCart, isDarkMode, toggleTheme, onChe
         '--app-border-radius': config?.borderRadius || '1rem'
     } as React.CSSProperties;
 
+    const viewOnly = isStoreOpen && !pedindoHabilitado;
+
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-500 pb-20 sm:pb-8" style={dynamicStyles}>
             
@@ -273,6 +375,12 @@ export default function Cardapio({ cart, setCart, isDarkMode, toggleTheme, onChe
                     <AlertCircle size={14} /> Estamos fechados no momento. Volte em breve para fazer seu pedido!
                 </div>
             )}
+
+            {viewOnly && (
+                <div className="bg-slate-800 text-white text-[10px] font-black uppercase tracking-[0.2em] py-2 text-center flex items-center justify-center gap-2 sticky top-0 z-[60] shadow-lg">
+                    <Eye size={14} /> Cardápio somente para visualização — pedidos só no horário ativo
+                </div>
+            )}
             
             <Header 
                 searchTerm={searchTerm} 
@@ -281,10 +389,54 @@ export default function Cardapio({ cart, setCart, isDarkMode, toggleTheme, onChe
                 onOpenCart={() => setIsCartOpen(true)}
                 isDarkMode={isDarkMode}
                 toggleTheme={toggleTheme}
-                isOpen={isStoreOpen}
+                isOpen={isStoreOpen && pedindoHabilitado}
             />
 
-            <nav className="sticky top-16 sm:top-20 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-100 dark:border-slate-800 overflow-x-auto hide-scrollbar">
+            {/* Switcher Almoço / Jantar */}
+            <div className="sticky top-16 sm:top-20 z-50 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-100 dark:border-slate-800">
+                <div className="max-w-7xl mx-auto px-4 sm:px-8 py-3 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
+                    <div className="inline-flex p-1 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                        <button
+                            type="button"
+                            onClick={() => setTipoVisualizado('dia')}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                                tipoVisualizado === 'dia'
+                                    ? 'bg-white dark:bg-slate-900 text-amber-600 shadow-sm'
+                                    : 'text-slate-400 hover:text-slate-600'
+                            }`}
+                        >
+                            <Sun size={14} /> Almoço
+                            {tipoAtivo === 'dia' && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            )}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setTipoVisualizado('noite')}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                                tipoVisualizado === 'noite'
+                                    ? 'bg-white dark:bg-slate-900 text-indigo-500 shadow-sm'
+                                    : 'text-slate-400 hover:text-slate-600'
+                            }`}
+                        >
+                            <Moon size={14} /> Jantar
+                            {tipoAtivo === 'noite' && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            )}
+                        </button>
+                    </div>
+                    {menuMeta?.periodosCardapio && (
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                            {tipoVisualizado === 'dia'
+                                ? `Almoço ${menuMeta.periodosCardapio.dia.inicio}–${menuMeta.periodosCardapio.dia.fim}`
+                                : `Jantar ${menuMeta.periodosCardapio.noite.inicio}–${menuMeta.periodosCardapio.noite.fim}`}
+                            {tipoAtivo == null ? ' · Fora do horário de pedidos' : tipoAtivo === tipoVisualizado ? ' · Pedidos liberados' : ' · Só visualização'}
+                        </p>
+                    )}
+                </div>
+            </div>
+
+            <nav className="sticky top-[7.5rem] sm:top-[8.25rem] z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-100 dark:border-slate-800 overflow-x-auto hide-scrollbar">
                 <div className="max-w-7xl mx-auto px-4 sm:px-8 py-3 flex gap-4">
                     {menuData.map(cat => (
                         <button 
@@ -334,7 +486,7 @@ export default function Cardapio({ cart, setCart, isDarkMode, toggleTheme, onChe
                             <SearchX size={40} className="text-slate-300" />
                         </div>
                         <h3 className="text-xl font-black text-slate-800 dark:text-slate-100">Nenhum item encontrado</h3>
-                        <p className="text-slate-500 dark:text-slate-400 text-sm mt-2 max-w-xs">Tente buscar por termos diferentes ou confira outras categorias.</p>
+                        <p className="text-slate-500 dark:text-slate-400 text-sm mt-2 max-w-xs">Tente buscar por termos diferentes ou confira o outro cardápio.</p>
                         <button onClick={() => setSearchTerm('')} className="mt-6 text-[10px] font-black uppercase tracking-widest hover:underline" style={{ color: 'var(--primary-color)' }}>Ver todo o cardápio</button>
                     </div>
                 )}
@@ -348,7 +500,7 @@ export default function Cardapio({ cart, setCart, isDarkMode, toggleTheme, onChe
                 onDecrement={(id) => updateQuantity(id, -1)} 
                 total={cartTotal} 
                 onCheckout={onCheckout} 
-                isDisabled={!isStoreOpen}
+                isDisabled={!pedindoHabilitado}
             />
             
             {isOptionsModalOpen && selectedProduct && (

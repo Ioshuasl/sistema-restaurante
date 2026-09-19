@@ -11,6 +11,12 @@ interface ProductListProps {
   onToggleAtivo: (id: number) => void;
 }
 
+const TIPO_BADGE: Record<string, string> = {
+  dia: 'Almoço',
+  noite: 'Jantar',
+  ambos: 'Ambos',
+};
+
 const ProductList: React.FC<ProductListProps> = ({ produtos, onEdit, onDelete, onToggleAtivo }) => {
   if (produtos.length === 0) {
     return (
@@ -27,6 +33,7 @@ const ProductList: React.FC<ProductListProps> = ({ produtos, onEdit, onDelete, o
         <thead>
           <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 transition-colors">
             <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest">Produto</th>
+            <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest text-center">Cardápio</th>
             <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest text-center">Preço</th>
             <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest text-center">Status</th>
             <th className="px-6 py-4 text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest text-right">Ações</th>
@@ -49,6 +56,11 @@ const ProductList: React.FC<ProductListProps> = ({ produtos, onEdit, onDelete, o
                     <p className="text-[10px] text-slate-400 dark:text-slate-600 font-bold uppercase">ID: {produto.id}</p>
                   </div>
                 </div>
+              </td>
+              <td className="px-6 py-4 text-center">
+                <span className="inline-block text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                  {TIPO_BADGE[produto.tipoMenu || 'ambos']}
+                </span>
               </td>
               <td className="px-6 py-4 text-center">
                 <span className="text-sm font-black text-slate-900 dark:text-slate-100">

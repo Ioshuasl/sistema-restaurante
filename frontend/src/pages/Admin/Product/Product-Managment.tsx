@@ -11,7 +11,7 @@ import ProductList from '../../../components/Admin/Product/ProductList';
 import ProductForm from '../../../components/Admin/Product/ProductForm';
 import ConfirmationModal from '../../../components/Common/ConfirmationModal';
 import { getAllProdutos, deleteProduto, toggleProdutoAtivo } from '../../../services/produtoService';
-import { type Produto } from '../../../types/interfaces-types';
+import { type Produto, type TipoMenu } from '../../../types/interfaces-types';
 import { toast } from 'react-toastify';
 
 interface Props {
@@ -21,10 +21,18 @@ interface Props {
 
 const UNREAD_ORDERS_KEY = 'gs-sabores-unread-orders';
 
+const TIPO_FILTER_OPTIONS: { value: 'todos' | TipoMenu; label: string }[] = [
+  { value: 'todos', label: 'Todos' },
+  { value: 'dia', label: 'Almoço' },
+  { value: 'noite', label: 'Jantar' },
+  { value: 'ambos', label: 'Ambos' },
+];
+
 const ProductManagment: React.FC<Props> = ({ isDarkMode, toggleTheme }) => {
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [tipoFilter, setTipoFilter] = useState<'todos' | TipoMenu>('todos');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Produto | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -87,7 +95,12 @@ const ProductManagment: React.FC<Props> = ({ isDarkMode, toggleTheme }) => {
     }
   };
 
-  const filteredProdutos = produtos.filter(p => p.nomeProduto.toLowerCase().includes(searchTerm.toLowerCase()));
+  const filteredProdutos = produtos.filter(p => {
+    const matchName = p.nomeProduto.toLowerCase().includes(searchTerm.toLowerCase());
+    const tipo = p.tipoMenu || 'ambos';
+    const matchTipo = tipoFilter === 'todos' || tipo === tipoFilter;
+    return matchName && matchTipo;
+  });
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex transition-colors duration-300">
@@ -103,15 +116,26 @@ const ProductManagment: React.FC<Props> = ({ isDarkMode, toggleTheme }) => {
         <div className="flex-1 overflow-y-auto p-4 sm:p-8 custom-scrollbar">
           <div className="max-w-7xl mx-auto space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4">
-              <div className="relative flex-1 max-w-lg">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                <input 
-                    type="text" 
-                    placeholder="Buscar produto pelo nome..." 
-                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl py-3 pl-12 pr-4 outline-none dark:text-slate-100 shadow-sm transition-all focus:ring-4 focus:ring-orange-500/10" 
-                    value={searchTerm} 
-                    onChange={e => setSearchTerm(e.target.value)} 
-                />
+              <div className="flex flex-col sm:flex-row gap-3 flex-1 max-w-2xl">
+                <div className="relative flex-1">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                  <input 
+                      type="text" 
+                      placeholder="Buscar produto pelo nome..." 
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl py-3 pl-12 pr-4 outline-none dark:text-slate-100 shadow-sm transition-all focus:ring-4 focus:ring-orange-500/10" 
+                      value={searchTerm} 
+                      onChange={e => setSearchTerm(e.target.value)} 
+                  />
+                </div>
+                <select
+                  value={tipoFilter}
+                  onChange={(e) => setTipoFilter(e.target.value as 'todos' | TipoMenu)}
+                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl py-3 px-4 outline-none dark:text-slate-100 shadow-sm text-sm font-bold"
+                >
+                  {TIPO_FILTER_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
               </div>
               <button 
                 onClick={() => { setEditingProduct(null); setIsFormOpen(true); }} 

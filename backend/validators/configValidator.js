@@ -57,6 +57,17 @@ export const updateConfigSchema = yup.object({
   nomeImpressora: yup.string(),
   horariosFuncionamento: yup.array().of(horarioDiaSchema),
 
+  periodosCardapio: yup.object({
+    dia: yup.object({
+      inicio: yup.string().required(),
+      fim: yup.string().required(),
+    }).required(),
+    noite: yup.object({
+      inicio: yup.string().required(),
+      fim: yup.string().required(),
+    }).required(),
+  }),
+
   tipoChavePix: yup.string().oneOf(['cpf', 'cnpj', 'email', 'telefone', 'aleatoria']),
   chavePix: yup.string().nullable(),
 });

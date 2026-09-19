@@ -4,6 +4,11 @@ import { Sequelize, Op, fn, col, where, literal } from 'sequelize';
 import { formatTelefone } from '../functions/formatTelefone.js';
 import { sendMessageWhatsapp } from '../functions/sendMessageWhatsapp.js';
 import { sendToAutomaticPrint } from '../functions/automatic-print.js';
+import {
+    DEFAULT_PERIODOS_CARDAPIO,
+    resolverTipoMenuAtivo,
+    podePedirNoPeriodo,
+} from '../utils/cardapioPeriodo.js';
 
 const pedidoItemsInclude = {
     model: ItemPedido,
@@ -133,11 +138,29 @@ class PedidoController {
 
             let valorTotalCalculado = 0;
 
+            const config = await Config.findByPk(1);
+            const tipoAtivo = resolverTipoMenuAtivo(
+                config?.periodosCardapio ?? DEFAULT_PERIODOS_CARDAPIO
+            );
+
+            if (!tipoAtivo) {
+                throw new Error(
+                    "Cardápio fora do horário de pedidos. Confira os períodos de almoço e jantar."
+                );
+            }
+
             // 4. Loop dos produtos
             for (const item of produtosPedido) {
                 const produto = await Produto.findByPk(item.produtoId);
                 if (!produto || !produto.isAtivo) {
                     throw new Error(`Produto com ID ${item.produtoId} não encontrado ou inativo.`);
+                }
+
+                if (!podePedirNoPeriodo(produto.tipoMenu, tipoAtivo)) {
+                    const rotulo = tipoAtivo === 'dia' ? 'almoço' : 'jantar';
+                    throw new Error(
+                        `O produto "${produto.nomeProduto}" não está disponível no cardápio de ${rotulo}.`
+                    );
                 }
 
                 const precoProduto = Number(produto.valorProduto);

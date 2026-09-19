@@ -7,7 +7,7 @@ import {
   updateCategoriaProduto, 
   deleteCategoriaProduto 
 } from '../../../services/categoriaProdutoService';
-import { type CategoriaProduto } from '../../../types/interfaces-types';
+import { type CategoriaProduto, type TipoMenu } from '../../../types/interfaces-types';
 import { toast } from 'react-toastify';
 
 interface CategoriaModalProps {
@@ -15,12 +15,20 @@ interface CategoriaModalProps {
   onRefresh: () => void;
 }
 
+const TIPO_MENU_LABELS: Record<TipoMenu, string> = {
+  dia: 'Almoço',
+  noite: 'Jantar',
+  ambos: 'Ambos',
+};
+
 const CategoriaModal: React.FC<CategoriaModalProps> = ({ onClose, onRefresh }) => {
   const [categorias, setCategorias] = useState<CategoriaProduto[]>([]);
   const [loading, setLoading] = useState(true);
   const [newCatName, setNewCatName] = useState('');
+  const [newCatTipo, setNewCatTipo] = useState<TipoMenu>('ambos');
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingName, setEditingName] = useState('');
+  const [editingTipo, setEditingTipo] = useState<TipoMenu>('ambos');
   const [isProcessing, setIsProcessing] = useState(false);
 
   const fetchCategorias = async () => {
@@ -43,8 +51,9 @@ const CategoriaModal: React.FC<CategoriaModalProps> = ({ onClose, onRefresh }) =
     if (!newCatName.trim()) return;
     setIsProcessing(true);
     try {
-      await createCategoriaProduto({ nomeCategoriaProduto: newCatName });
+      await createCategoriaProduto({ nomeCategoriaProduto: newCatName, tipoMenu: newCatTipo });
       setNewCatName('');
+      setNewCatTipo('ambos');
       toast.success("Criada!");
       fetchCategorias();
       onRefresh();
@@ -59,7 +68,10 @@ const CategoriaModal: React.FC<CategoriaModalProps> = ({ onClose, onRefresh }) =
     if (!editingName.trim()) return;
     setIsProcessing(true);
     try {
-      await updateCategoriaProduto(id, { nomeCategoriaProduto: editingName });
+      await updateCategoriaProduto(id, {
+        nomeCategoriaProduto: editingName,
+        tipoMenu: editingTipo,
+      });
       setEditingId(null);
       toast.success("Atualizada!");
       fetchCategorias();
@@ -84,6 +96,7 @@ const CategoriaModal: React.FC<CategoriaModalProps> = ({ onClose, onRefresh }) =
   };
 
   const inputClasses = "w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-sm outline-none focus:ring-4 focus:ring-orange-500/10 dark:text-slate-100 transition-all";
+  const selectClasses = "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-3 text-sm outline-none focus:ring-4 focus:ring-orange-500/10 dark:text-slate-100";
 
   return (
     <div className="absolute inset-0 z-[110] bg-slate-900/40 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center p-0 sm:p-8 animate-fade-in transition-colors">
@@ -102,23 +115,35 @@ const CategoriaModal: React.FC<CategoriaModalProps> = ({ onClose, onRefresh }) =
         </div>
         
         <div className="p-6 flex-1 overflow-y-auto space-y-6 custom-scrollbar transition-colors">
-          <div className="flex gap-2">
-            <input 
-              type="text" 
-              className={inputClasses} 
-              placeholder="Nova categoria..." 
-              value={newCatName}
-              onChange={(e) => setNewCatName(e.target.value)}
+          <div className="flex flex-col gap-2">
+            <div className="flex gap-2">
+              <input 
+                type="text" 
+                className={inputClasses} 
+                placeholder="Nova categoria..." 
+                value={newCatName}
+                onChange={(e) => setNewCatName(e.target.value)}
+                disabled={isProcessing}
+              />
+              <button 
+                type="button"
+                onClick={handleAdd}
+                disabled={isProcessing || !newCatName.trim()}
+                className="bg-orange-500 text-white p-3 rounded-xl hover:bg-orange-600 transition-all shadow-lg shrink-0 flex items-center justify-center w-[46px]"
+              >
+                {isProcessing && !editingId ? <Loader2 size={20} className="animate-spin" /> : <Plus size={20} />}
+              </button>
+            </div>
+            <select
+              className={selectClasses}
+              value={newCatTipo}
+              onChange={(e) => setNewCatTipo(e.target.value as TipoMenu)}
               disabled={isProcessing}
-            />
-            <button 
-              type="button"
-              onClick={handleAdd}
-              disabled={isProcessing || !newCatName.trim()}
-              className="bg-orange-500 text-white p-3 rounded-xl hover:bg-orange-600 transition-all shadow-lg shrink-0 flex items-center justify-center w-[46px]"
             >
-              {isProcessing && !editingId ? <Loader2 size={20} className="animate-spin" /> : <Plus size={20} />}
-            </button>
+              {(Object.keys(TIPO_MENU_LABELS) as TipoMenu[]).map((key) => (
+                <option key={key} value={key}>{TIPO_MENU_LABELS[key]}</option>
+              ))}
+            </select>
           </div>
 
           <div className="space-y-2">
@@ -130,24 +155,44 @@ const CategoriaModal: React.FC<CategoriaModalProps> = ({ onClose, onRefresh }) =
               categorias.map(cat => (
                 <div key={cat.id} className="flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-100 dark:border-slate-800 group transition-all">
                   {editingId === cat.id ? (
-                    <div className="flex-1 flex gap-2">
-                      <input 
-                        type="text" 
-                        className="flex-1 bg-white dark:bg-slate-800 border border-orange-500 rounded-xl px-3 py-1.5 text-sm outline-none font-bold dark:text-slate-100"
-                        value={editingName}
-                        onChange={(e) => setEditingName(e.target.value)}
-                        autoFocus
-                      />
-                      <button type="button" onClick={() => handleUpdate(cat.id)} className="text-emerald-500 p-1"><Check size={20}/></button>
-                      <button type="button" onClick={() => setEditingId(null)} className="text-slate-400 p-1"><X size={20}/></button>
+                    <div className="flex-1 flex flex-col gap-2">
+                      <div className="flex gap-2">
+                        <input 
+                          type="text" 
+                          className="flex-1 bg-white dark:bg-slate-800 border border-orange-500 rounded-xl px-3 py-1.5 text-sm outline-none font-bold dark:text-slate-100"
+                          value={editingName}
+                          onChange={(e) => setEditingName(e.target.value)}
+                          autoFocus
+                        />
+                        <button type="button" onClick={() => handleUpdate(cat.id)} className="text-emerald-500 p-1"><Check size={20}/></button>
+                        <button type="button" onClick={() => setEditingId(null)} className="text-slate-400 p-1"><X size={20}/></button>
+                      </div>
+                      <select
+                        className={selectClasses}
+                        value={editingTipo}
+                        onChange={(e) => setEditingTipo(e.target.value as TipoMenu)}
+                      >
+                        {(Object.keys(TIPO_MENU_LABELS) as TipoMenu[]).map((key) => (
+                          <option key={key} value={key}>{TIPO_MENU_LABELS[key]}</option>
+                        ))}
+                      </select>
                     </div>
                   ) : (
                     <>
-                      <span className="text-sm font-black text-slate-700 dark:text-slate-200 ml-2 truncate mr-4">{cat.nomeCategoriaProduto}</span>
+                      <div className="ml-2 mr-4 min-w-0">
+                        <span className="text-sm font-black text-slate-700 dark:text-slate-200 truncate block">{cat.nomeCategoriaProduto}</span>
+                        <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">
+                          {TIPO_MENU_LABELS[cat.tipoMenu || 'ambos']}
+                        </span>
+                      </div>
                       <div className="flex gap-1 shrink-0">
                         <button 
                           type="button"
-                          onClick={() => { setEditingId(cat.id); setEditingName(cat.nomeCategoriaProduto); }}
+                          onClick={() => {
+                            setEditingId(cat.id);
+                            setEditingName(cat.nomeCategoriaProduto);
+                            setEditingTipo(cat.tipoMenu || 'ambos');
+                          }}
                           className="p-2 text-slate-400 hover:text-blue-500 transition-colors"
                         >
                           <Edit3 size={16} />

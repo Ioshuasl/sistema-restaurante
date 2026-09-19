@@ -1,8 +1,20 @@
-
-import type { Produto, SubProduto, CategoriaProduto } from './product';
+import type { Produto, SubProduto, CategoriaProduto, TipoMenu } from './product';
+import type { PeriodosCardapio } from './config';
 
 export interface Menu extends CategoriaProduto {
   Produtos: Produto[];
+}
+
+export interface MenuMeta {
+  tipoSolicitado: 'dia' | 'noite';
+  tipoAtivo: 'dia' | 'noite' | null;
+  pedindoHabilitado: boolean;
+  periodosCardapio: PeriodosCardapio;
+}
+
+export interface MenuResponse {
+  categorias: Menu[];
+  meta: MenuMeta;
 }
 
 export type CartItem = {
@@ -13,3 +25,5 @@ export type CartItem = {
   unitPriceWithSubProducts: number;
   observation?: string;
 };
+
+export type { TipoMenu };

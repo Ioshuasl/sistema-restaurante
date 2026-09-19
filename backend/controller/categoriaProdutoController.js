@@ -4,9 +4,12 @@ import { CategoriaProduto, Produto, SubProduto, GrupoOpcao } from "../models/ind
 class CategoriaProdutoController {
 
     //funcao para criar categoria de produto
-    async createCategoriaProduto(nomeCategoriaProduto) {
+    async createCategoriaProduto(nomeCategoriaProduto, tipoMenu = 'ambos') {
         try {
-            const categoriaProduto = await CategoriaProduto.create({ nomeCategoriaProduto })
+            const categoriaProduto = await CategoriaProduto.create({
+                nomeCategoriaProduto,
+                tipoMenu: tipoMenu || 'ambos',
+            })
             return { message: "Categoria de produto criado com sucesso", categoriaProduto }
         } catch (error) {
             console.error(error)

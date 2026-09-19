@@ -38,6 +38,7 @@ const CONFIG_UPDATE_KEYS: (keyof UpdateConfigPayload)[] = [
   'urlAgenteImpressao',
   'nomeImpressora',
   'horariosFuncionamento',
+  'periodosCardapio',
   'tipoChavePix',
   'chavePix',
 ];

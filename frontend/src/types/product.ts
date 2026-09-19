@@ -1,7 +1,10 @@
 
+export type TipoMenu = 'dia' | 'noite' | 'ambos';
+
 export interface CategoriaProduto {
   id: number;
   nomeCategoriaProduto: string;
+  tipoMenu?: TipoMenu;
   createdAt: string;
   updatedAt: string;
   Produtos?: Produto[];
@@ -9,10 +12,12 @@ export interface CategoriaProduto {
 
 export interface CreateCategoriaProdutoPayload {
   nomeCategoriaProduto: string;
+  tipoMenu?: TipoMenu;
 }
 
 export interface UpdateCategoriaProdutoPayload {
-  nomeCategoriaProduto: string;
+  nomeCategoriaProduto?: string;
+  tipoMenu?: TipoMenu;
 }
 
 export type SubProduto = {
@@ -50,6 +55,7 @@ export interface Produto {
   descricao?: string;
   image: string;
   isAtivo: boolean;
+  tipoMenu?: TipoMenu;
   categoriaProduto_id: number;
   isPromo?: boolean;
   createdAt: string;
@@ -78,6 +84,7 @@ export interface CreateProdutoPayload {
   image?: string;
   descricao?: string;
   isAtivo?: boolean;
+  tipoMenu?: TipoMenu;
   categoriaProduto_id: number;
   gruposOpcoes?: GrupoOpcaoPayload[];
 }
@@ -88,6 +95,7 @@ export interface UpdateProdutoPayload {
   image?: string;
   descricao?: string;
   isAtivo?: boolean;
+  tipoMenu?: TipoMenu;
   categoriaProduto_id?: number;
   gruposOpcoes?: GrupoOpcaoPayload[];
 }

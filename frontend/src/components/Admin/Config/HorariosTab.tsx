@@ -81,15 +81,28 @@ const TimeWheelPicker = ({
 
 export default function HorariosTab({ data, onChange, labelClasses }: HorariosTabProps) {
   const [activePicker, setActivePicker] = useState<{ idx: number; type: 'inicio' | 'fim' } | null>(null);
+  const [periodoPicker, setPeriodoPicker] = useState<{ menu: 'dia' | 'noite'; type: 'inicio' | 'fim' } | null>(null);
 
   const horarios: HorarioDia[] = data.horariosFuncionamento || Array.from({ length: 7 }, (_, i) => ({
     dia: i, aberto: true, inicio: '08:00', fim: '22:00'
   }));
 
+  const periodos = data.periodosCardapio || {
+    dia: { inicio: '11:00', fim: '15:00' },
+    noite: { inicio: '18:00', fim: '23:00' },
+  };
+
   const updateDia = (index: number, changes: Partial<HorarioDia>) => {
     const newHorarios = [...horarios];
     newHorarios[index] = { ...newHorarios[index], ...changes };
     onChange('horariosFuncionamento', newHorarios);
+  };
+
+  const updatePeriodo = (menu: 'dia' | 'noite', field: 'inicio' | 'fim', value: string) => {
+    onChange('periodosCardapio', {
+      ...periodos,
+      [menu]: { ...periodos[menu], [field]: value },
+    });
   };
 
   const calculateDuration = (start: string, end: string) => {
@@ -114,6 +127,53 @@ export default function HorariosTab({ data, onChange, labelClasses }: HorariosTa
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
+      {/* Períodos do cardápio */}
+      <div className="bg-white dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-800 rounded-[3rem] p-8 shadow-sm">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="bg-orange-500 p-2.5 rounded-2xl text-white shadow-lg shadow-orange-500/20">
+            <Sun size={20} />
+          </div>
+          <h4 className="text-xl font-black uppercase tracking-tight text-slate-800 dark:text-slate-100">Períodos do Cardápio</h4>
+        </div>
+        <p className="text-slate-400 text-sm font-medium mb-8 max-w-xl leading-relaxed">
+          Define quando o cardápio de almoço (marmitas) e de jantar (espetinhos) aceitam pedidos. Fora do horário, o cliente só pode visualizar.
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {([
+            { key: 'dia' as const, title: 'Almoço (Dia)', icon: Sun, hint: 'Marmitas' },
+            { key: 'noite' as const, title: 'Jantar (Noite)', icon: Moon, hint: 'Espetinhos' },
+          ]).map(({ key, title, icon: Icon, hint }) => (
+            <div key={key} className="p-6 rounded-[2rem] bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2 mb-4">
+                <Icon size={16} className={key === 'dia' ? 'text-amber-500' : 'text-indigo-400'} />
+                <div>
+                  <span className="block text-sm font-black text-slate-800 dark:text-slate-100 uppercase tracking-tight">{title}</span>
+                  <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">{hint}</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPeriodoPicker({ menu: key, type: 'inicio' })}
+                  className="flex-1 px-4 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm font-black tabular-nums hover:border-orange-500 transition-all"
+                >
+                  {periodos[key].inicio}
+                </button>
+                <span className="text-slate-300 font-black">–</span>
+                <button
+                  type="button"
+                  onClick={() => setPeriodoPicker({ menu: key, type: 'fim' })}
+                  className="flex-1 px-4 py-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm font-black tabular-nums hover:border-orange-500 transition-all"
+                >
+                  {periodos[key].fim}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Banner de Info */}
       <div className="bg-gradient-to-br from-slate-900 to-slate-800 p-8 sm:p-10 rounded-[3rem] text-white relative overflow-hidden group shadow-2xl">
         <div className="absolute top-0 right-0 p-10 opacity-10 group-hover:scale-110 transition-transform duration-1000">
@@ -128,7 +188,7 @@ export default function HorariosTab({ data, onChange, labelClasses }: HorariosTa
               <h4 className="text-2xl font-black uppercase tracking-tight">Expediente</h4>
             </div>
             <p className="text-slate-400 text-sm font-medium max-w-sm leading-relaxed">
-              Gerencie os horários de operação automática. O sistema monitora essas janelas para liberar ou bloquear pedidos no cardápio.
+              Gerencie os horários de operação automática. O sistema monitora essas janelas para liberar ou bloquear a loja (aberto/fechado).
             </p>
           </div>
           <div className="flex items-center gap-4 bg-white/5 backdrop-blur-md p-4 rounded-[2rem] border border-white/10">
@@ -289,6 +349,15 @@ export default function HorariosTab({ data, onChange, labelClasses }: HorariosTa
           value={horarios[activePicker.idx][activePicker.type]}
           onClose={() => setActivePicker(null)}
           onSave={(val) => updateDia(activePicker.idx, { [activePicker.type]: val })}
+        />
+      )}
+
+      {periodoPicker && (
+        <TimeWheelPicker
+          label={`${periodoPicker.menu === 'dia' ? 'Almoço' : 'Jantar'} — ${periodoPicker.type === 'inicio' ? 'Início' : 'Fim'}`}
+          value={periodos[periodoPicker.menu][periodoPicker.type]}
+          onClose={() => setPeriodoPicker(null)}
+          onSave={(val) => updatePeriodo(periodoPicker.menu, periodoPicker.type, val)}
         />
       )}
 

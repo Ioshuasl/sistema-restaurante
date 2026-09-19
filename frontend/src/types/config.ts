@@ -7,6 +7,16 @@ export interface HorarioDia {
   fim: string;
 }
 
+export interface PeriodoCardapio {
+  inicio: string;
+  fim: string;
+}
+
+export interface PeriodosCardapio {
+  dia: PeriodoCardapio;
+  noite: PeriodoCardapio;
+}
+
 export interface Config {
   id: number;
   cnpj: string;
@@ -36,6 +46,7 @@ export interface Config {
   urlAgenteImpressao: string;
   nomeImpressora: string;
   horariosFuncionamento?: HorarioDia[];
+  periodosCardapio?: PeriodosCardapio;
   
   // --- NOVOS CAMPOS PIX ---
   tipoChavePix?: 'cpf' | 'cnpj' | 'email' | 'telefone' | 'aleatoria';
@@ -68,6 +79,7 @@ export interface UpdateConfigPayload {
   urlAgenteImpressao?: string;
   nomeImpressora?: string;
   horariosFuncionamento?: HorarioDia[];
+  periodosCardapio?: PeriodosCardapio;
   
   // --- NOVOS CAMPOS PIX ---
   tipoChavePix?: 'cpf' | 'cnpj' | 'email' | 'telefone' | 'aleatoria';
