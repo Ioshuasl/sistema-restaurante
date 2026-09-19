@@ -1,4 +1,3 @@
-import { Op } from "sequelize";
 import { CategoriaProduto, Produto, GrupoOpcao, SubProduto, Config } from "../models/index.js";
 import { normalizeMenuCategories } from "../utils/publicUrl.js";
 import {
@@ -30,14 +29,10 @@ class MenuController {
             const pedindoHabilitado = tipoAtivo != null && tipoSolicitado === tipoAtivo;
 
             const categoriaProdutos = await CategoriaProduto.findAll({
-                where: {
-                    tipoMenu: { [Op.in]: [tipoSolicitado, 'ambos'] },
-                },
                 include: {
                     model: Produto,
                     where: {
                         isAtivo: true,
-                        tipoMenu: { [Op.in]: [tipoSolicitado, 'ambos'] },
                     },
                     required: false,
                     include: {
@@ -56,11 +51,17 @@ class MenuController {
                 },
             });
 
-            // Remove categorias sem produtos após o filtro (required: false pode trazer vazias)
+            // Filtro de tipoMenu em JS (Op.in em ENUM no Postgres/Sequelize pode zerar o include)
             const plainMenu = categoriaProdutos
                 .map((category) => category.get({ plain: true }))
-                .filter((cat) => Array.isArray(cat.Produtos) && cat.Produtos.length > 0)
-                .filter((cat) => pertenceAoMenu(cat.tipoMenu, tipoSolicitado));
+                .filter((cat) => pertenceAoMenu(cat.tipoMenu, tipoSolicitado))
+                .map((cat) => {
+                    const produtos = (cat.Produtos || cat.produtos || []).filter((p) =>
+                        pertenceAoMenu(p.tipoMenu, tipoSolicitado)
+                    );
+                    return { ...cat, Produtos: produtos, produtos };
+                })
+                .filter((cat) => cat.Produtos.length > 0);
 
             const categorias = normalizeMenuCategories(plainMenu);
 
