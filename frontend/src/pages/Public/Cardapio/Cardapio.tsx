@@ -15,6 +15,7 @@ import {
 } from '../../../types/interfaces-types';
 import { WifiOff, SearchX, Plus, AlertCircle, Eye, Sun, Moon } from 'lucide-react';
 import { normalizeImageUrl } from '../../../utils/normalizeImageUrl';
+import { estabelecimentoAbertoAgora } from '../../../utils/horariosCardapio';
 import { toast } from 'react-toastify';
 
 interface CardapioProps {
@@ -49,54 +50,10 @@ export default function Cardapio({ cart, setCart, isDarkMode, toggleTheme, onChe
     const initialTipoSet = useRef(false);
     const lastTipoAtivo = useRef<TipoVisualizado | null | undefined>(undefined);
 
-    const isStoreOpen = useMemo(() => {
-        if (!config?.horariosFuncionamento || config.horariosFuncionamento.length === 0) return true;
-
-        const agora = new Date();
-        const diaSemana = agora.getDay();
-        const horaMinuto = agora.getHours() * 60 + agora.getMinutes();
-
-        const configHoje = config.horariosFuncionamento.find(h => h.dia === diaSemana);
-
-        if (!configHoje || !configHoje.aberto) return false;
-
-        const periodos = configHoje.periodos;
-        if (periodos) {
-            const noAlmoco =
-                periodos.dia.ativo &&
-                (() => {
-                    const [hIni, mIni] = periodos.dia.inicio.split(':').map(Number);
-                    const [hFim, mFim] = periodos.dia.fim.split(':').map(Number);
-                    const ini = hIni * 60 + mIni;
-                    const fim = hFim * 60 + mFim;
-                    if (fim < ini) return horaMinuto >= ini || horaMinuto <= fim;
-                    return horaMinuto >= ini && horaMinuto <= fim;
-                })();
-            const noJantar =
-                periodos.noite.ativo &&
-                (() => {
-                    const [hIni, mIni] = periodos.noite.inicio.split(':').map(Number);
-                    const [hFim, mFim] = periodos.noite.fim.split(':').map(Number);
-                    const ini = hIni * 60 + mIni;
-                    const fim = hFim * 60 + mFim;
-                    if (fim < ini) return horaMinuto >= ini || horaMinuto <= fim;
-                    return horaMinuto >= ini && horaMinuto <= fim;
-                })();
-            return Boolean(noAlmoco || noJantar);
-        }
-
-        const [hIni, mIni] = (configHoje.inicio || '00:00').split(':').map(Number);
-        const [hFim, mFim] = (configHoje.fim || '23:59').split(':').map(Number);
-
-        const inicioMinutos = hIni * 60 + mIni;
-        const fimMinutos = hFim * 60 + mFim;
-
-        if (fimMinutos < inicioMinutos) {
-            return horaMinuto >= inicioMinutos || horaMinuto <= fimMinutos;
-        }
-
-        return horaMinuto >= inicioMinutos && horaMinuto <= fimMinutos;
-    }, [config]);
+    const isStoreOpen = useMemo(
+        () => estabelecimentoAbertoAgora(config?.horariosFuncionamento),
+        [config]
+    );
 
     const tipoAtivo = menuMeta?.tipoAtivo ?? null;
     const pedindoHabilitado = Boolean(

@@ -136,6 +136,49 @@ export function syncLegacyWindow(day: HorarioDia): HorarioDia {
   };
 }
 
+export const BUSINESS_TIMEZONE = 'America/Sao_Paulo';
+
+const WEEKDAY_TO_INDEX: Record<string, number> = {
+  Sun: 0,
+  Mon: 1,
+  Tue: 2,
+  Wed: 3,
+  Thu: 4,
+  Fri: 5,
+  Sat: 6,
+};
+
+/** Horário sempre em Brasília (regra do negócio). */
+export function getBrasiliaParts(date = new Date()) {
+  const fmt = new Intl.DateTimeFormat('en-US', {
+    timeZone: BUSINESS_TIMEZONE,
+    weekday: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  });
+  const parts = Object.fromEntries(
+    fmt
+      .formatToParts(date)
+      .filter((p) => p.type !== 'literal')
+      .map((p) => [p.type, p.value])
+  );
+
+  let hours = Number(parts.hour);
+  if (hours === 24) hours = 0;
+  const minutes = Number(parts.minute);
+  const dayOfWeek = WEEKDAY_TO_INDEX[parts.weekday];
+
+  return {
+    dayOfWeek: Number.isFinite(dayOfWeek) ? dayOfWeek : date.getDay(),
+    hours: Number.isFinite(hours) ? hours : date.getHours(),
+    minutes: Number.isFinite(minutes) ? minutes : date.getMinutes(),
+    minutesOfDay:
+      (Number.isFinite(hours) ? hours : date.getHours()) * 60 +
+      (Number.isFinite(minutes) ? minutes : date.getMinutes()),
+  };
+}
+
 export function parseHoraParaMinutos(hhmm: string): number | null {
   const match = /^(\d{1,2}):(\d{2})$/.exec((hhmm || '').trim());
   if (!match) return null;
@@ -145,27 +188,39 @@ export function parseHoraParaMinutos(hhmm: string): number | null {
   return h * 60 + m;
 }
 
+/** Intervalo inclusivo [inicio, fim], com suporte a virada de dia. */
 export function estaNoIntervalo(agoraMinutos: number, inicio: string, fim: string): boolean {
   const inicioMin = parseHoraParaMinutos(inicio);
   const fimMin = parseHoraParaMinutos(fim);
   if (inicioMin == null || fimMin == null) return false;
   if (inicioMin === fimMin) return true;
   if (inicioMin < fimMin) {
-    return agoraMinutos >= inicioMin && agoraMinutos < fimMin;
+    return agoraMinutos >= inicioMin && agoraMinutos <= fimMin;
   }
-  return agoraMinutos >= inicioMin || agoraMinutos < fimMin;
+  return agoraMinutos >= inicioMin || agoraMinutos <= fimMin;
 }
 
 export function diaEstaAtendendo(day: HorarioDia, agora = new Date()): boolean {
   if (!day.aberto) return false;
-  const min = agora.getHours() * 60 + agora.getMinutes();
+  const { minutesOfDay } = getBrasiliaParts(agora);
   const p = day.periodos;
   if (!p) {
-    return estaNoIntervalo(min, day.inicio || '00:00', day.fim || '23:59');
+    return estaNoIntervalo(minutesOfDay, day.inicio || '00:00', day.fim || '23:59');
   }
-  const noAlmoco = p.dia.ativo && estaNoIntervalo(min, p.dia.inicio, p.dia.fim);
-  const noJantar = p.noite.ativo && estaNoIntervalo(min, p.noite.inicio, p.noite.fim);
+  const noAlmoco = p.dia.ativo && estaNoIntervalo(minutesOfDay, p.dia.inicio, p.dia.fim);
+  const noJantar = p.noite.ativo && estaNoIntervalo(minutesOfDay, p.noite.inicio, p.noite.fim);
   return noAlmoco || noJantar;
+}
+
+export function estabelecimentoAbertoAgora(
+  horarios: HorarioDia[] | undefined | null,
+  agora = new Date()
+): boolean {
+  if (!Array.isArray(horarios) || horarios.length === 0) return true;
+  const { dayOfWeek } = getBrasiliaParts(agora);
+  const raw = horarios.find((h) => h.dia === dayOfWeek);
+  if (!raw) return false;
+  return diaEstaAtendendo(normalizeHorarioDia(raw), agora);
 }
 
 export function formatDuration(inicio: string, fim: string): string {

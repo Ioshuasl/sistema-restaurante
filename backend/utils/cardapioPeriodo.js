@@ -1,10 +1,58 @@
 /** @typedef {'dia' | 'noite'} TipoMenuAtivo */
 /** @typedef {'dia' | 'noite' | 'ambos'} TipoMenu */
 
+export const BUSINESS_TIMEZONE = 'America/Sao_Paulo';
+
 export const DEFAULT_PERIODOS_CARDAPIO = {
     dia: { inicio: '11:00', fim: '15:00' },
     noite: { inicio: '18:00', fim: '23:00' },
 };
+
+const WEEKDAY_TO_INDEX = {
+    Sun: 0,
+    Mon: 1,
+    Tue: 2,
+    Wed: 3,
+    Thu: 4,
+    Fri: 5,
+    Sat: 6,
+};
+
+/**
+ * Partes de data/hora sempre no fuso do negócio (Brasília),
+ * independente do timezone do servidor (UTC no EasyPanel, etc.).
+ * @param {Date} [date]
+ */
+export function getBrasiliaParts(date = new Date()) {
+    const fmt = new Intl.DateTimeFormat('en-US', {
+        timeZone: BUSINESS_TIMEZONE,
+        weekday: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hourCycle: 'h23',
+    });
+    const parts = Object.fromEntries(
+        fmt
+            .formatToParts(date)
+            .filter((p) => p.type !== 'literal')
+            .map((p) => [p.type, p.value])
+    );
+
+    let hours = Number(parts.hour);
+    if (hours === 24) hours = 0;
+    const minutes = Number(parts.minute);
+    const dayOfWeek = WEEKDAY_TO_INDEX[parts.weekday];
+
+    return {
+        dayOfWeek: Number.isFinite(dayOfWeek) ? dayOfWeek : date.getDay(),
+        hours: Number.isFinite(hours) ? hours : date.getHours(),
+        minutes: Number.isFinite(minutes) ? minutes : date.getMinutes(),
+        minutesOfDay:
+            (Number.isFinite(hours) ? hours : date.getHours()) * 60 +
+            (Number.isFinite(minutes) ? minutes : date.getMinutes()),
+    };
+}
 
 /**
  * @param {string} hhmm
@@ -21,6 +69,8 @@ export function parseHoraParaMinutos(hhmm) {
 }
 
 /**
+ * Intervalo inclusivo nos dois lados [inicio, fim].
+ * Suporta atravessar meia-noite (ex.: 22:00–02:00).
  * @param {number} agoraMinutos
  * @param {string} inicio
  * @param {string} fim
@@ -32,13 +82,12 @@ export function estaNoIntervalo(agoraMinutos, inicio, fim) {
 
     if (inicioMin === fimMin) return true;
     if (inicioMin < fimMin) {
-        return agoraMinutos >= inicioMin && agoraMinutos < fimMin;
+        return agoraMinutos >= inicioMin && agoraMinutos <= fimMin;
     }
-    return agoraMinutos >= inicioMin || agoraMinutos < fimMin;
+    return agoraMinutos >= inicioMin || agoraMinutos <= fimMin;
 }
 
 /**
- * Monta o default semanal com Almoço/Jantar por dia.
  * @param {{ dia?: { inicio: string, fim: string }, noite?: { inicio: string, fim: string } }} [periodos]
  */
 export function createDefaultHorariosFuncionamento(periodos = DEFAULT_PERIODOS_CARDAPIO) {
@@ -60,7 +109,6 @@ export function createDefaultHorariosFuncionamento(periodos = DEFAULT_PERIODOS_C
 }
 
 /**
- * Normaliza um dia legado → formato com periodos.dia / periodos.noite.
  * @param {any} raw
  * @param {{ dia: { inicio: string, fim: string }, noite: { inicio: string, fim: string } }} defaults
  */
@@ -90,9 +138,6 @@ export function normalizeHorarioDia(raw, defaults = DEFAULT_PERIODOS_CARDAPIO) {
 }
 
 /**
- * Resolve os períodos efetivos do cardápio para o instante informado
- * (respeita o dia da semana e toggles de Almoço/Jantar).
- *
  * @param {{
  *   horariosFuncionamento?: any[],
  *   periodosCardapio?: { dia?: { inicio: string, fim: string }, noite?: { inicio: string, fim: string } }
@@ -105,12 +150,12 @@ export function resolvePeriodosParaAgora(config, agora = new Date()) {
         noite: config?.periodosCardapio?.noite ?? DEFAULT_PERIODOS_CARDAPIO.noite,
     };
 
-    const diaSemana = agora.getDay();
+    const { dayOfWeek } = getBrasiliaParts(agora);
     const lista = Array.isArray(config?.horariosFuncionamento)
         ? config.horariosFuncionamento
         : [];
-    const rawHoje = lista.find((h) => h?.dia === diaSemana);
-    const hoje = normalizeHorarioDia(rawHoje || { dia: diaSemana, aberto: true }, defaults);
+    const rawHoje = lista.find((h) => h?.dia === dayOfWeek);
+    const hoje = normalizeHorarioDia(rawHoje || { dia: dayOfWeek, aberto: true }, defaults);
 
     if (!hoje || !hoje.aberto) {
         return {
@@ -134,9 +179,6 @@ export function resolvePeriodosParaAgora(config, agora = new Date()) {
 }
 
 /**
- * Resolve o cardápio ativo no instante informado.
- * Aceita períodos já resolvidos (com ou sem `ativo`) OU o objeto config completo.
- *
  * @param {any} periodosOuConfig
  * @param {Date} [agora]
  * @returns {TipoMenuAtivo | null}
@@ -165,12 +207,12 @@ export function resolverTipoMenuAtivo(periodosOuConfig, agora = new Date()) {
               },
           };
 
-    const agoraMinutos = agora.getHours() * 60 + agora.getMinutes();
+    const { minutesOfDay } = getBrasiliaParts(agora);
 
     const noDia =
-        p.dia.ativo !== false && estaNoIntervalo(agoraMinutos, p.dia.inicio, p.dia.fim);
+        p.dia.ativo !== false && estaNoIntervalo(minutesOfDay, p.dia.inicio, p.dia.fim);
     const naNoite =
-        p.noite.ativo !== false && estaNoIntervalo(agoraMinutos, p.noite.inicio, p.noite.fim);
+        p.noite.ativo !== false && estaNoIntervalo(minutesOfDay, p.noite.inicio, p.noite.fim);
 
     if (noDia) return 'dia';
     if (naNoite) return 'noite';
@@ -178,22 +220,20 @@ export function resolverTipoMenuAtivo(periodosOuConfig, agora = new Date()) {
 }
 
 /**
- * Estabelecimento aceita pedido agora (qualquer cardápio ativo no dia).
  * @param {any[]} horarios
  * @param {Date} [agora]
  */
 export function estabelecimentoAbertoAgora(horarios, agora = new Date()) {
     if (!Array.isArray(horarios) || horarios.length === 0) return true;
-    const diaSemana = agora.getDay();
-    const raw = horarios.find((h) => h?.dia === diaSemana);
-    const hoje = normalizeHorarioDia(raw || { dia: diaSemana, aberto: false });
+    const { dayOfWeek, minutesOfDay } = getBrasiliaParts(agora);
+    const raw = horarios.find((h) => h?.dia === dayOfWeek);
+    const hoje = normalizeHorarioDia(raw || { dia: dayOfWeek, aberto: false });
     if (!hoje?.aberto) return false;
 
-    const min = agora.getHours() * 60 + agora.getMinutes();
     const p = hoje.periodos;
     return (
-        (p.dia.ativo && estaNoIntervalo(min, p.dia.inicio, p.dia.fim)) ||
-        (p.noite.ativo && estaNoIntervalo(min, p.noite.inicio, p.noite.fim))
+        (p.dia.ativo && estaNoIntervalo(minutesOfDay, p.dia.inicio, p.dia.fim)) ||
+        (p.noite.ativo && estaNoIntervalo(minutesOfDay, p.noite.inicio, p.noite.fim))
     );
 }
 

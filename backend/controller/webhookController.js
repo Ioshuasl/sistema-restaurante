@@ -8,12 +8,10 @@ import {
 } from '../utils/cardapioPeriodo.js';
 
 /**
- * Verifica se o estabelecimento está aberto com base nos horários do banco de dados.
- * Considera o fuso horário de Brasília.
+ * Verifica se o estabelecimento está aberto (fuso Brasília).
  */
 const estaNoHorarioAtendimento = (horarios) => {
-  const agora = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
-  return estabelecimentoAbertoAgora(horarios, agora);
+  return estabelecimentoAbertoAgora(horarios);
 };
 
 export const handleIncomingMessage = async (req, res) => {
