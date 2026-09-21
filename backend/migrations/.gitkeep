@@ -1,0 +1,3 @@
+# Pasta de migrações do Sequelize CLI.
+# A base de produção já está atualizada — novas alterações de schema
+# devem entrar aqui (npx sequelize-cli migration:generate --name ...).

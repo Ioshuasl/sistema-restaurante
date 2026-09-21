@@ -52,7 +52,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isDarkMode, toggleTheme, isOpen, onCl
   const menuItems = [
     { path: '/admin/dashboard', icon: BarChart3, label: 'Dashboard' },
     { path: '/admin/order', icon: Package, label: 'Pedidos', alert: true },
-    { path: '/admin/product', icon: ShoppingBag, label: 'Produtos' },
+    { path: '/admin/product', icon: ShoppingBag, label: 'Cardápio' },
     { path: '/admin/user/consult', icon: Users, label: 'Usuários' },
     { path: '/admin/config', icon: Settings, label: 'Configurações' },
   ];

@@ -1,6 +1,6 @@
 import { cacheDel, cacheDelByPrefix } from './cache.js';
 
-export const MENU_CACHE_PREFIX = 'menu:v1';
+export const MENU_CACHE_PREFIX = 'menu:v2';
 const CONFIG_CACHE_KEY = 'config:v1';
 
 export function menuCacheKey(tipo) {

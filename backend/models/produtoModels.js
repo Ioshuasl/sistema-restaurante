@@ -31,7 +31,7 @@ const Produto = sequelize.define('produtos',{
     tipoMenu: {
         type: DataTypes.ENUM('dia', 'noite', 'ambos'),
         allowNull: false,
-        defaultValue: 'ambos',
+        defaultValue: 'dia',
         comment: 'Cardápio: dia (marmitas), noite (espetinhos) ou ambos'
     },
     categoriaProduto_id: {

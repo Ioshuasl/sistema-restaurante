@@ -3,7 +3,7 @@ import express from 'express'
 import cors from "cors"
 import { isAdmin, authenticateToken } from '../middlewares/authMiddleware.js'
 import { validate } from "../middlewares/validationMiddleware.js";
-import { createCategoriaProdutoSchema, updateCategoriaProdutoSchema } from "../validators/categoriaProdutoValidator.js";
+import { createCategoriaProdutoSchema, updateCategoriaProdutoSchema, reorderCategoriaProdutoSchema } from "../validators/categoriaProdutoValidator.js";
 import { invalidateMenuCache } from '../utils/publicCache.js';
 
 const categoriaProdutoRoutes = express.Router()
@@ -34,6 +34,27 @@ categoriaProdutoRoutes.get('/categoriaProduto', async (req,res) => {
         return res.status(400).send(error)
     }
 })
+
+// Reordenar categorias (antes de /:id)
+categoriaProdutoRoutes.put(
+    '/categoriaProduto/reorder',
+    authenticateToken,
+    isAdmin,
+    validate(reorderCategoriaProdutoSchema),
+    async (req, res) => {
+        try {
+            const result = await categoriaProdutoController.reorderCategoriaProdutos(req.body.orderedIds);
+            if (result?.error) {
+                return res.status(400).json(result);
+            }
+            invalidateMenuCache();
+            return res.status(200).json(result);
+        } catch (error) {
+            console.error(error);
+            return res.status(400).json(error);
+        }
+    }
+);
 
 //rota para encontrar categoria de produto pelo id
 categoriaProdutoRoutes.get('/categoriaProduto/:id', async (req,res) => {

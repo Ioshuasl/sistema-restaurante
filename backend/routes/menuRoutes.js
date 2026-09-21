@@ -2,39 +2,42 @@ import menuController from "../controller/menuController.js";
 import express from 'express'
 import cors from 'cors'
 import { cacheGet, cacheSet } from '../utils/cache.js';
-import { setPublicCache } from '../middlewares/cacheHeaders.js';
+import { setNoCache } from '../middlewares/cacheHeaders.js';
 import { menuCacheKey } from '../utils/publicCache.js';
 import {
-    DEFAULT_PERIODOS_CARDAPIO,
     resolverTipoMenuAtivo,
+    resolvePeriodosParaAgora,
 } from '../utils/cardapioPeriodo.js';
 import { Config } from '../models/index.js';
 
 const menuRoutes = express.Router()
-const MENU_CACHE_TTL = 120;
+const MENU_CACHE_TTL = 60;
 
 menuRoutes.use(cors())
 
 async function resolveTipoSolicitado(tipoQuery) {
     if (tipoQuery === 'dia' || tipoQuery === 'noite') return tipoQuery;
     const config = await Config.findByPk(1);
-    const periodos = config?.periodosCardapio ?? DEFAULT_PERIODOS_CARDAPIO;
-    return resolverTipoMenuAtivo(periodos) || 'dia';
+    return resolverTipoMenuAtivo(resolvePeriodosParaAgora(config)) || 'dia';
 }
 
 async function buildMeta(tipoSolicitado) {
     const config = await Config.findByPk(1);
-    const periodos = config?.periodosCardapio ?? DEFAULT_PERIODOS_CARDAPIO;
-    const tipoAtivo = resolverTipoMenuAtivo(periodos);
+    const periodosHoje = resolvePeriodosParaAgora(config);
+    const tipoAtivo = resolverTipoMenuAtivo(periodosHoje);
     return {
         tipoSolicitado,
         tipoAtivo,
         pedindoHabilitado: tipoAtivo != null && tipoSolicitado === tipoAtivo,
-        periodosCardapio: periodos,
+        periodosCardapio: {
+            dia: { inicio: periodosHoje.dia.inicio, fim: periodosHoje.dia.fim },
+            noite: { inicio: periodosHoje.noite.inicio, fim: periodosHoje.noite.fim },
+        },
     };
 }
 
-menuRoutes.get('/menu', setPublicCache(60), async (req, res) => {
+// Sem cache HTTP no browser — a ordem do cardápio muda no admin e precisa refletir na hora.
+menuRoutes.get('/menu', setNoCache, async (req, res) => {
     try {
         const rawTipo = String(req.query.tipo || 'auto').toLowerCase();
         const tipoQuery = ['auto', 'dia', 'noite'].includes(rawTipo) ? rawTipo : 'auto';

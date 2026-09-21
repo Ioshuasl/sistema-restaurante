@@ -1,20 +1,14 @@
 import { Config } from "../models/index.js";
 import { normalizeConfigAssets } from "../utils/publicUrl.js";
+import { createDefaultHorariosFuncionamento, DEFAULT_PERIODOS_CARDAPIO } from "../utils/cardapioPeriodo.js";
 
 class ConfigController {
 
     // Função para encontrar ou criar a configuração/parâmetros do sistema
     async getOrCreateConfig(id) {
 
-        const defaultHorarios = [
-                { dia: 0, aberto: true, inicio: "08:00", fim: "22:00" },
-                { dia: 1, aberto: true, inicio: "08:00", fim: "22:00" },
-                { dia: 2, aberto: true, inicio: "08:00", fim: "22:00" },
-                { dia: 3, aberto: true, inicio: "08:00", fim: "22:00" },
-                { dia: 4, aberto: true, inicio: "08:00", fim: "22:00" },
-                { dia: 5, aberto: true, inicio: "08:00", fim: "22:00" },
-                { dia: 6, aberto: true, inicio: "08:00", fim: "22:00" }
-            ];
+        const defaultPeriodos = { ...DEFAULT_PERIODOS_CARDAPIO };
+        const defaultHorarios = createDefaultHorariosFuncionamento(defaultPeriodos);
 
         try {
             const [config, created] = await Config.findOrCreate({
@@ -47,10 +41,7 @@ class ConfigController {
                     showBanner: false,
                     bannerImage: null,
                     horariosFuncionamento: defaultHorarios,
-                    periodosCardapio: {
-                        dia: { inicio: "11:00", fim: "15:00" },
-                        noite: { inicio: "18:00", fim: "23:00" }
-                    }
+                    periodosCardapio: defaultPeriodos,
                 }
             });
 
@@ -58,10 +49,7 @@ class ConfigController {
                 console.log("Registro de configuração inicial criado com sucesso");
             } else if (!config.periodosCardapio) {
                 await config.update({
-                    periodosCardapio: {
-                        dia: { inicio: "11:00", fim: "15:00" },
-                        noite: { inicio: "18:00", fim: "23:00" }
-                    }
+                    periodosCardapio: defaultPeriodos,
                 });
                 await config.reload();
             }

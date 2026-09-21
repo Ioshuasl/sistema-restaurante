@@ -1,21 +1,34 @@
 import * as yup from 'yup';
 
+const periodoMenuSchema = yup.object({
+  ativo: yup.boolean().required(),
+  inicio: yup.string().required(),
+  fim: yup.string().required(),
+});
+
 const horarioDiaSchema = yup.object({
   dia: yup.number().integer().min(0).max(6).required(),
   aberto: yup.boolean().required(),
   inicio: yup.string().required(),
   fim: yup.string().required(),
+  periodos: yup
+    .object({
+      dia: periodoMenuSchema.required(),
+      noite: periodoMenuSchema.required(),
+    })
+    .optional(),
 });
 
-// Esquema para a atualização das configurações do sistema
 export const updateConfigSchema = yup.object({
   cnpj: yup.string(),
 
-  razaoSocial: yup.string()
-    .min(3, "A Razão Social deve ter no mínimo 3 caracteres."),
+  razaoSocial: yup
+    .string()
+    .min(3, 'A Razão Social deve ter no mínimo 3 caracteres.'),
 
-  nomeFantasia: yup.string()
-    .min(3, "O Nome Fantasia deve ter no mínimo 3 caracteres."),
+  nomeFantasia: yup
+    .string()
+    .min(3, 'O Nome Fantasia deve ter no mínimo 3 caracteres.'),
 
   cep: yup.string(),
 
@@ -33,17 +46,18 @@ export const updateConfigSchema = yup.object({
 
   cidade: yup.string(),
 
-  estado: yup.string()
-    .length(2, "O estado deve ser a sigla de 2 letras (UF)."),
+  estado: yup.string().length(2, 'O estado deve ser a sigla de 2 letras (UF).'),
 
   telefone: yup.string(),
 
-  email: yup.string()
+  email: yup
+    .string()
     .transform((value) => (value === '' ? undefined : value))
-    .email("O formato do e-mail é inválido."),
+    .email('O formato do e-mail é inválido.'),
 
-  taxaEntrega: yup.number()
-    .min(0, "A taxa de entrega não pode ser um valor negativo."),
+  taxaEntrega: yup
+    .number()
+    .min(0, 'A taxa de entrega não pode ser um valor negativo.'),
 
   menuLayout: yup.string(),
   primaryColor: yup.string(),
@@ -58,16 +72,22 @@ export const updateConfigSchema = yup.object({
   horariosFuncionamento: yup.array().of(horarioDiaSchema),
 
   periodosCardapio: yup.object({
-    dia: yup.object({
-      inicio: yup.string().required(),
-      fim: yup.string().required(),
-    }).required(),
-    noite: yup.object({
-      inicio: yup.string().required(),
-      fim: yup.string().required(),
-    }).required(),
+    dia: yup
+      .object({
+        inicio: yup.string().required(),
+        fim: yup.string().required(),
+      })
+      .required(),
+    noite: yup
+      .object({
+        inicio: yup.string().required(),
+        fim: yup.string().required(),
+      })
+      .required(),
   }),
 
-  tipoChavePix: yup.string().oneOf(['cpf', 'cnpj', 'email', 'telefone', 'aleatoria']),
+  tipoChavePix: yup
+    .string()
+    .oneOf(['cpf', 'cnpj', 'email', 'telefone', 'aleatoria']),
   chavePix: yup.string().nullable(),
 });

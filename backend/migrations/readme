@@ -1,1 +1,8 @@
-Pasta relacionada as migrações do db caso necessários
+Pasta de migrações do Sequelize CLI.
+
+Como o backend usa `"type": "module"`, os arquivos de migração
+devem usar extensão `.cjs` (CommonJS).
+
+Exemplo:
+  npx sequelize-cli migration:generate --name minha-migracao
+  # renomeie o arquivo gerado de .js para .cjs

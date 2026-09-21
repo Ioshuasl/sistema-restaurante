@@ -3,27 +3,17 @@ import WhatsappCliente from '../models/whatsappClienteModel.js';
 import { sendMessageWhatsapp } from '../functions/sendMessageWhatsapp.js';
 import Config from '../models/configModels.js';
 
+import {
+  estabelecimentoAbertoAgora,
+} from '../utils/cardapioPeriodo.js';
+
 /**
  * Verifica se o estabelecimento está aberto com base nos horários do banco de dados.
  * Considera o fuso horário de Brasília.
  */
 const estaNoHorarioAtendimento = (horarios) => {
-  // Obtém a data/hora atual no fuso horário de Brasília
   const agora = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
-  
-  const diaSemana = agora.getDay(); // 0 (Domingo) a 6 (Sábado)
-  const horaAtual = agora.getHours().toString().padStart(2, '0');
-  const minutoAtual = agora.getMinutes().toString().padStart(2, '0');
-  const horarioAgora = `${horaAtual}:${minutoAtual}`;
-
-  // Localiza a configuração para o dia da semana atual
-  const configDia = horarios.find(h => h.dia === diaSemana);
-
-  // Se não houver config ou estiver marcado como fechado
-  if (!configDia || !configDia.aberto) return false;
-
-  // Compara strings de horário (HH:mm)
-  return horarioAgora >= configDia.inicio && horarioAgora <= configDia.fim;
+  return estabelecimentoAbertoAgora(horarios, agora);
 };
 
 export const handleIncomingMessage = async (req, res) => {
@@ -115,8 +105,18 @@ export const handleIncomingMessage = async (req, res) => {
         const diasNomes = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
         
         const listaHorarios = config.horariosFuncionamento
-          .sort((a, b) => a.dia - b.dia) // Garante a ordem dos dias
-          .map(h => `• *${diasNomes[h.dia]}*: ${h.aberto ? `${h.inicio} às ${h.fim}` : '_Fechado_'}`)
+          .sort((a, b) => a.dia - b.dia)
+          .map((h) => {
+            if (!h.aberto) return `• *${diasNomes[h.dia]}*: _Fechado_`;
+            const p = h.periodos;
+            if (p) {
+              const partes = [];
+              if (p.dia?.ativo) partes.push(`Almoço ${p.dia.inicio}–${p.dia.fim}`);
+              if (p.noite?.ativo) partes.push(`Jantar ${p.noite.inicio}–${p.noite.fim}`);
+              return `• *${diasNomes[h.dia]}*: ${partes.length ? partes.join(' | ') : '_Fechado_'}`;
+            }
+            return `• *${diasNomes[h.dia]}*: ${h.inicio} às ${h.fim}`;
+          })
           .join('\n');
 
         mensagensParaEnviar = [

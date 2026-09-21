@@ -1,24 +1,20 @@
 import { CategoriaProduto, Produto, GrupoOpcao, SubProduto, Config } from "../models/index.js";
 import { normalizeMenuCategories } from "../utils/publicUrl.js";
 import {
-    DEFAULT_PERIODOS_CARDAPIO,
     resolverTipoMenuAtivo,
+    resolvePeriodosParaAgora,
     pertenceAoMenu,
 } from "../utils/cardapioPeriodo.js";
 
 class MenuController {
-    async getPeriodosCardapio() {
-        const config = await Config.findByPk(1);
-        return config?.periodosCardapio ?? DEFAULT_PERIODOS_CARDAPIO;
-    }
-
     /**
      * @param {'auto' | 'dia' | 'noite'} tipoQuery
      */
     async getMenu(tipoQuery = 'auto') {
         try {
-            const periodos = await this.getPeriodosCardapio();
-            const tipoAtivo = resolverTipoMenuAtivo(periodos);
+            const config = await Config.findByPk(1);
+            const periodosHoje = resolvePeriodosParaAgora(config);
+            const tipoAtivo = resolverTipoMenuAtivo(periodosHoje);
 
             let tipoSolicitado = tipoQuery === 'auto' ? tipoAtivo : tipoQuery;
             if (tipoSolicitado !== 'dia' && tipoSolicitado !== 'noite') {
@@ -29,8 +25,16 @@ class MenuController {
             const pedindoHabilitado = tipoAtivo != null && tipoSolicitado === tipoAtivo;
 
             const categoriaProdutos = await CategoriaProduto.findAll({
+                order: [
+                    ['ordem', 'ASC'],
+                    ['id', 'ASC'],
+                ],
                 include: {
                     model: Produto,
+                    separate: true,
+                    order: [
+                        ['id', 'ASC'],
+                    ],
                     where: {
                         isAtivo: true,
                     },
@@ -64,7 +68,13 @@ class MenuController {
                     rest.Produtos = produtos;
                     return rest;
                 })
-                .filter((cat) => cat.Produtos.length > 0);
+                .filter((cat) => cat.Produtos.length > 0)
+                // Garante ordem mesmo após filtros / includes
+                .sort((a, b) => {
+                    const oa = Number.isFinite(a.ordem) ? a.ordem : a.id;
+                    const ob = Number.isFinite(b.ordem) ? b.ordem : b.id;
+                    return oa - ob || a.id - b.id;
+                });
 
             const categorias = normalizeMenuCategories(plainMenu);
 
@@ -74,7 +84,10 @@ class MenuController {
                     tipoSolicitado,
                     tipoAtivo,
                     pedindoHabilitado,
-                    periodosCardapio: periodos,
+                    periodosCardapio: {
+                        dia: { inicio: periodosHoje.dia.inicio, fim: periodosHoje.dia.fim },
+                        noite: { inicio: periodosHoje.noite.inicio, fim: periodosHoje.noite.fim },
+                    },
                 },
             };
         } catch (error) {

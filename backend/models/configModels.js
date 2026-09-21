@@ -147,15 +147,57 @@ const Config = sequelize.define('config', {
         type: DataTypes.JSONB,
         allowNull: false,
         defaultValue: [
-            { dia: 0, aberto: true, inicio: "08:00", fim: "22:00" },
-            { dia: 1, aberto: true, inicio: "08:00", fim: "22:00" },
-            { dia: 2, aberto: true, inicio: "08:00", fim: "22:00" },
-            { dia: 3, aberto: true, inicio: "08:00", fim: "22:00" },
-            { dia: 4, aberto: true, inicio: "08:00", fim: "22:00" },
-            { dia: 5, aberto: true, inicio: "08:00", fim: "22:00" },
-            { dia: 6, aberto: true, inicio: "08:00", fim: "22:00" }
+            {
+                dia: 0, aberto: true, inicio: "11:00", fim: "23:00",
+                periodos: {
+                    dia: { ativo: true, inicio: "11:00", fim: "15:00" },
+                    noite: { ativo: true, inicio: "18:00", fim: "23:00" }
+                }
+            },
+            {
+                dia: 1, aberto: true, inicio: "11:00", fim: "23:00",
+                periodos: {
+                    dia: { ativo: true, inicio: "11:00", fim: "15:00" },
+                    noite: { ativo: true, inicio: "18:00", fim: "23:00" }
+                }
+            },
+            {
+                dia: 2, aberto: true, inicio: "11:00", fim: "23:00",
+                periodos: {
+                    dia: { ativo: true, inicio: "11:00", fim: "15:00" },
+                    noite: { ativo: true, inicio: "18:00", fim: "23:00" }
+                }
+            },
+            {
+                dia: 3, aberto: true, inicio: "11:00", fim: "23:00",
+                periodos: {
+                    dia: { ativo: true, inicio: "11:00", fim: "15:00" },
+                    noite: { ativo: true, inicio: "18:00", fim: "23:00" }
+                }
+            },
+            {
+                dia: 4, aberto: true, inicio: "11:00", fim: "23:00",
+                periodos: {
+                    dia: { ativo: true, inicio: "11:00", fim: "15:00" },
+                    noite: { ativo: true, inicio: "18:00", fim: "23:00" }
+                }
+            },
+            {
+                dia: 5, aberto: true, inicio: "11:00", fim: "23:00",
+                periodos: {
+                    dia: { ativo: true, inicio: "11:00", fim: "15:00" },
+                    noite: { ativo: true, inicio: "18:00", fim: "23:00" }
+                }
+            },
+            {
+                dia: 6, aberto: true, inicio: "11:00", fim: "23:00",
+                periodos: {
+                    dia: { ativo: true, inicio: "11:00", fim: "15:00" },
+                    noite: { ativo: true, inicio: "18:00", fim: "23:00" }
+                }
+            }
         ],
-        comment: "Armazena o array de objetos com os horários de cada dia da semana"
+        comment: "Horários semanais: por dia, Almoço (dia) e Jantar (noite) com ativo/inicio/fim"
     },
     periodosCardapio: {
         type: DataTypes.JSONB,
@@ -164,7 +206,7 @@ const Config = sequelize.define('config', {
             dia: { inicio: "11:00", fim: "15:00" },
             noite: { inicio: "18:00", fim: "23:00" }
         },
-        comment: "Horários em que cada cardápio (dia/noite) está ativo para pedidos"
+        comment: "Template padrão de períodos; horários efetivos ficam em horariosFuncionamento[].periodos"
     },
 }, {
     tableName: 'config',

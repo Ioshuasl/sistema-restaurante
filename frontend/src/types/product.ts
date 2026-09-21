@@ -5,6 +5,7 @@ export interface CategoriaProduto {
   id: number;
   nomeCategoriaProduto: string;
   tipoMenu?: TipoMenu;
+  ordem?: number;
   createdAt: string;
   updatedAt: string;
   Produtos?: Produto[];
@@ -18,6 +19,11 @@ export interface CreateCategoriaProdutoPayload {
 export interface UpdateCategoriaProdutoPayload {
   nomeCategoriaProduto?: string;
   tipoMenu?: TipoMenu;
+  ordem?: number;
+}
+
+export interface ReorderCategoriasPayload {
+  orderedIds: number[];
 }
 
 export type SubProduto = {

@@ -1,8 +1,14 @@
-
 import api from './api';
-import { type CategoriaProduto, type CreateCategoriaProdutoPayload, type UpdateCategoriaProdutoPayload } from '../types/interfaces-types';
+import {
+  type CategoriaProduto,
+  type CreateCategoriaProdutoPayload,
+  type UpdateCategoriaProdutoPayload,
+  type ReorderCategoriasPayload,
+} from '../types/interfaces-types';
 
-export const createCategoriaProduto = async (payload: CreateCategoriaProdutoPayload): Promise<CategoriaProduto> => {
+export const createCategoriaProduto = async (
+  payload: CreateCategoriaProdutoPayload
+): Promise<CategoriaProduto> => {
   const response = await api.post('/categoriaProduto', payload);
   return response.data;
 };
@@ -17,9 +23,18 @@ export const getCategoriaProdutoById = async (id: number): Promise<CategoriaProd
   return response.data;
 };
 
-export const updateCategoriaProduto = async (id: number, payload: UpdateCategoriaProdutoPayload): Promise<CategoriaProduto> => {
+export const updateCategoriaProduto = async (
+  id: number,
+  payload: UpdateCategoriaProdutoPayload
+): Promise<CategoriaProduto> => {
   const response = await api.put(`/categoriaProduto/${id}`, payload);
   return response.data;
+};
+
+export const reorderCategoriasProdutos = async (
+  payload: ReorderCategoriasPayload
+): Promise<void> => {
+  await api.put('/categoriaProduto/reorder', payload);
 };
 
 export const deleteCategoriaProduto = async (id: number): Promise<void> => {

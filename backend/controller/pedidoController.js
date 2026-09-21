@@ -5,7 +5,6 @@ import { formatTelefone } from '../functions/formatTelefone.js';
 import { sendMessageWhatsapp } from '../functions/sendMessageWhatsapp.js';
 import { sendToAutomaticPrint } from '../functions/automatic-print.js';
 import {
-    DEFAULT_PERIODOS_CARDAPIO,
     resolverTipoMenuAtivo,
     podePedirNoPeriodo,
 } from '../utils/cardapioPeriodo.js';
@@ -139,9 +138,7 @@ class PedidoController {
             let valorTotalCalculado = 0;
 
             const config = await Config.findByPk(1);
-            const tipoAtivo = resolverTipoMenuAtivo(
-                config?.periodosCardapio ?? DEFAULT_PERIODOS_CARDAPIO
-            );
+            const tipoAtivo = resolverTipoMenuAtivo(config);
 
             if (!tipoAtivo) {
                 throw new Error(

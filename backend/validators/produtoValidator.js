@@ -30,7 +30,7 @@ export const createProdutoSchema = yup.object({
     image: yup.string().required("A imagem do produto é obrigatória."),
     isAtivo: yup.boolean().default(true),
     categoriaProduto_id: yup.number().required("A categoria é obrigatória.").integer(),
-    tipoMenu: yup.string().oneOf(['dia', 'noite', 'ambos']).default('ambos'),
+    tipoMenu: yup.string().oneOf(['dia', 'noite', 'ambos']).default('dia'),
     
     // --- ALTERAÇÃO AQUI ---
     // Trocamos 'subprodutos' por 'gruposOpcoes'
