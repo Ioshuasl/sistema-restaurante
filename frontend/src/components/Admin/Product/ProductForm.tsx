@@ -65,6 +65,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
   const [isAtivo, setIsAtivo] = useState(product?.isAtivo ?? true);
   const [tipoMenu, setTipoMenu] = useState<TipoMenu>(product?.tipoMenu || 'dia');
   const [isUploading, setIsUploading] = useState(false);
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
 
   const [grupos, setGrupos] = useState<GrupoOpcaoPayload[]>(() => {
     if (product?.gruposOpcoes) {
@@ -115,9 +116,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
     return response.data.imageUrl;
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const processImageFile = async (file: File) => {
     if (!file.type.startsWith('image/')) {
       toast.error('Selecione um arquivo de imagem.');
       return;
@@ -143,6 +142,35 @@ const ProductForm: React.FC<ProductFormProps> = ({
     } finally {
       setIsUploading(false);
     }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (file) processImageFile(file);
+  };
+
+  const isFileDrag = (e: React.DragEvent) => e.dataTransfer.types.includes('Files');
+
+  const handleMediaDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    if (!isFileDrag(e)) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    if (!isDraggingFile) setIsDraggingFile(true);
+  };
+
+  const handleMediaDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
+    setIsDraggingFile(false);
+  };
+
+  const handleMediaDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    if (!isFileDrag(e)) return;
+    e.preventDefault();
+    setIsDraggingFile(false);
+    if (isUploading) return;
+    const file = e.dataTransfer.files?.[0];
+    if (file) processImageFile(file);
   };
 
   const addGrupo = () => {
@@ -525,10 +553,19 @@ const ProductForm: React.FC<ProductFormProps> = ({
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click();
                   }}
+                  onDragEnter={handleMediaDragOver}
+                  onDragOver={handleMediaDragOver}
+                  onDragLeave={handleMediaDragLeave}
+                  onDrop={handleMediaDrop}
                   role="button"
                   tabIndex={0}
+                  aria-label="Enviar foto do produto: clique ou arraste uma imagem"
                   className={`group relative aspect-video w-full max-w-xl mx-auto rounded-[2rem] border-2 border-dashed transition-all flex flex-col items-center justify-center overflow-hidden shadow-inner cursor-pointer
-                    ${image ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/20' : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50'}
+                    ${isDraggingFile
+                      ? 'border-orange-500 bg-orange-100 dark:bg-orange-900/30 ring-4 ring-orange-500/20 scale-[1.01]'
+                      : image
+                        ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/20'
+                        : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50'}
                     ${isUploading ? 'opacity-50 pointer-events-none' : ''}
                   `}
                 >
@@ -537,15 +574,22 @@ const ProductForm: React.FC<ProductFormProps> = ({
                   ) : image ? (
                     <>
                       <img src={image} className="w-full h-full object-cover" alt="Preview" />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <div
+                        className={`absolute inset-0 bg-black/40 transition-opacity flex flex-col items-center justify-center gap-2 ${
+                          isDraggingFile ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                        }`}
+                      >
                         <CloudUpload className="text-white" size={32} />
+                        <span className="text-[10px] font-black text-white uppercase tracking-widest">
+                          {isDraggingFile ? 'Solte para substituir' : 'Clique ou arraste para trocar'}
+                        </span>
                       </div>
                     </>
                   ) : (
-                    <div className="flex flex-col items-center px-6 text-center">
+                    <div className="flex flex-col items-center px-6 text-center pointer-events-none">
                       <Upload size={32} className="text-orange-500 mb-2" />
                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                        Clique para enviar
+                        {isDraggingFile ? 'Solte a imagem aqui' : 'Clique ou arraste uma imagem'}
                       </span>
                       <span className="text-xs text-slate-400 mt-2">
                         Use uma foto clara do prato — isso vende no cardápio.
