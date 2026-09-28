@@ -1,5 +1,4 @@
 const DEFAULT_PUBLIC_API_URL = 'https://api-gs-sabores.ioshuavps.com.br';
-const DEFAULT_UPLOADS_BASE_URL = 'https://projeto-backend-restaurante.lwcbm0.easypanel.host';
 
 export function getPublicApiBaseUrl() {
     const configured = process.env.PUBLIC_API_URL?.trim();
@@ -14,7 +13,7 @@ export function getUploadsBaseUrl() {
     if (configured) {
         return configured.replace(/\/$/, '');
     }
-    return DEFAULT_UPLOADS_BASE_URL;
+    return getPublicApiBaseUrl();
 }
 
 export function buildUploadUrl(fileName) {

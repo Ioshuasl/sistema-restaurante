@@ -1,4 +1,4 @@
-const DEFAULT_UPLOADS_BASE = 'https://projeto-backend-restaurante.lwcbm0.easypanel.host';
+const DEFAULT_UPLOADS_BASE = 'https://api-gs-sabores.ioshuavps.com.br';
 
 function getUploadsBaseUrl() {
   const configured = import.meta.env.VITE_UPLOADS_BASE_URL?.replace(/\/$/, '');
