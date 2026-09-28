@@ -24,6 +24,20 @@ type SyncStatus = 'synced' | 'saving' | 'error' | 'idle';
 
 const UNREAD_ORDERS_KEY = 'gs-sabores-unread-orders';
 
+/** Valor da máscara ("1.234,56") → número. */
+function parseTaxa(value: unknown): number {
+    if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+    if (typeof value !== 'string' || !value.trim()) return 0;
+    const n = parseFloat(value.replace(/\./g, '').replace(',', '.'));
+    return Number.isFinite(n) ? n : 0;
+}
+
+/** Número/decimal da API → valor da máscara ("12,50"). */
+function formatTaxa(value: unknown): string {
+    const n = Number(value);
+    return (Number.isFinite(n) ? n : 0).toFixed(2).replace('.', ',');
+}
+
 export default function Config({ isDarkMode, toggleTheme }: { isDarkMode: boolean; toggleTheme: () => void }) {
     const [configData, setConfigData] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -64,20 +78,20 @@ export default function Config({ isDarkMode, toggleTheme }: { isDarkMode: boolea
         if (isFirstLoad.current || !configData?.id) return;
         setSyncStatus('saving');
         try {
-            const taxa = typeof configData.taxaEntrega === 'string' 
-                ? parseFloat(configData.taxaEntrega.replace(/\./g, '').replace(',', '.')) 
-                : configData.taxaEntrega;
-
-            const saved = await updateConfig({ ...configData, taxaEntrega: taxa || 0 });
+            const saved = await updateConfig({
+                ...configData,
+                taxaEntregaDia: parseTaxa(configData.taxaEntregaDia),
+                taxaEntregaNoite: parseTaxa(configData.taxaEntregaNoite),
+            });
             // Evita loop: atualizar o state com a resposta não deve disparar novo save
             skipNextAutosave.current = true;
             setConfigData((prev: any) => ({
                 ...prev,
                 ...saved,
-                taxaEntrega:
-                  saved?.taxaEntrega != null
-                    ? String(saved.taxaEntrega).replace('.', ',')
-                    : prev?.taxaEntrega,
+                taxaEntregaDia:
+                  saved?.taxaEntregaDia != null ? formatTaxa(saved.taxaEntregaDia) : prev?.taxaEntregaDia,
+                taxaEntregaNoite:
+                  saved?.taxaEntregaNoite != null ? formatTaxa(saved.taxaEntregaNoite) : prev?.taxaEntregaNoite,
             }));
             setSyncStatus('synced');
             setLastSaved(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
@@ -104,7 +118,8 @@ export default function Config({ isDarkMode, toggleTheme }: { isDarkMode: boolea
                 const c = await getConfig();
                 setConfigData({
                     ...c,
-                    taxaEntrega: c.taxaEntrega?.toString().replace('.', ',') || "0,00",
+                    taxaEntregaDia: formatTaxa(c.taxaEntregaDia),
+                    taxaEntregaNoite: formatTaxa(c.taxaEntregaNoite),
                     tipoChavePix: c.tipoChavePix || 'cnpj',
                     chavePix: c.chavePix || ''
                 });

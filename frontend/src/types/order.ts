@@ -20,7 +20,6 @@ export interface CreatePedidoPayload {
   formaPagamento_id: number;
   situacaoPedido: string;
   isRetiradaEstabelecimento: boolean;
-  taxaEntrega: number;
   nomeCliente: string;
   telefoneCliente: string;
   cepCliente: string;
@@ -40,7 +39,7 @@ export interface UpdatePedidoPayload {
 }
 
 export interface Pedido {
-  taxaEntrega: boolean;
+  taxaEntrega: string | number;
   id: number;
   numeroDiario?: number;
   formaPagamento_id: number;

@@ -52,7 +52,10 @@ export interface Config {
   estado: string;
   telefone: string;
   email: string;
-  taxaEntrega: number;
+  /** Taxa de entrega do cardápio do dia (almoço). */
+  taxaEntregaDia: number;
+  /** Taxa de entrega do cardápio da noite (jantar). */
+  taxaEntregaNoite: number;
   menuLayout: 'modern' | 'compact' | 'minimalist';
   primaryColor: string;
   fontFamily: 'sans' | 'serif' | 'mono' | 'poppins';
@@ -87,7 +90,8 @@ export interface UpdateConfigPayload {
   estado?: string;
   telefone?: string;
   email?: string;
-  taxaEntrega?: number;
+  taxaEntregaDia?: number;
+  taxaEntregaNoite?: number;
   menuLayout?: 'modern' | 'compact' | 'minimalist';
   primaryColor?: string;
   fontFamily?: 'sans' | 'serif' | 'mono' | 'poppins';

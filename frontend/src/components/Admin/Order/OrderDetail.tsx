@@ -216,7 +216,7 @@ const OrderDetail: React.FC<OrderDetailProps> = ({ pedido, onClose, onStatusUpda
                   <p className="text-lg font-black text-emerald-600 dark:text-emerald-500 transition-colors">
                     R$ {Number(pedido.valorTotalPedido).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </p>
-                  {!pedido.isRetiradaEstabelecimento && pedido.taxaEntrega && Number(pedido.taxaEntrega) > 0 && (
+                  {!pedido.isRetiradaEstabelecimento && Number(pedido.taxaEntrega) > 0 && (
                     <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase">
                       (Inclui Taxa: R$ {Number(pedido.taxaEntrega).toFixed(2)})
                     </span>

@@ -18,6 +18,12 @@ const Pedido = sequelize.define('pedidos', {
         type: DataTypes.DECIMAL(10, 2), // DECIMAL é mais preciso para valores monetários que FLOAT.
         allowNull: false
     },
+    taxaEntrega: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false,
+        defaultValue: 0,
+        comment: "Taxa de entrega aplicada no momento do pedido"
+    },
     situacaoPedido: {
         type: DataTypes.ENUM('preparando', 'entrega', 'finalizado', 'cancelado'),
         allowNull: false

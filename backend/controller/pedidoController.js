@@ -6,6 +6,7 @@ import { sendMessageWhatsapp } from '../functions/sendMessageWhatsapp.js';
 import { sendToAutomaticPrint } from '../functions/automatic-print.js';
 import {
     resolverTipoMenuAtivo,
+    resolverTaxaEntrega,
     podePedirNoPeriodo,
 } from '../utils/cardapioPeriodo.js';
 
@@ -73,7 +74,6 @@ class PedidoController {
         bairroCliente,
         cidadeCliente,
         estadoCliente,
-        taxaEntrega,
         tempoEspera,
         observacao
     }) {
@@ -90,6 +90,18 @@ class PedidoController {
             if (!produtosPedido || produtosPedido.length === 0) {
                 throw new Error("O pedido deve conter pelo menos um produto.");
             }
+
+            const config = await Config.findByPk(1);
+            const tipoAtivo = resolverTipoMenuAtivo(config);
+
+            if (!tipoAtivo) {
+                throw new Error(
+                    "Cardápio fora do horário de pedidos. Confira os períodos de almoço e jantar."
+                );
+            }
+
+            // Taxa definida pelo servidor conforme o cardápio ativo (não confia no valor do cliente)
+            const taxaEntrega = isRetiradaEstabelecimento ? 0 : resolverTaxaEntrega(config, tipoAtivo);
 
             // --- LÓGICA DO NÚMERO DIÁRIO (NOVA) ---
 
@@ -132,19 +144,11 @@ class PedidoController {
                 estadoCliente,
                 tempoEspera,
                 observacao,
+                taxaEntrega,
                 valorTotalPedido: 0
             }, { transaction: t });
 
             let valorTotalCalculado = 0;
-
-            const config = await Config.findByPk(1);
-            const tipoAtivo = resolverTipoMenuAtivo(config);
-
-            if (!tipoAtivo) {
-                throw new Error(
-                    "Cardápio fora do horário de pedidos. Confira os períodos de almoço e jantar."
-                );
-            }
 
             // 4. Loop dos produtos
             for (const item of produtosPedido) {
@@ -202,9 +206,8 @@ class PedidoController {
                 }
             }
 
-            // 6. Adiciona taxa de entrega (evita NaN quando o campo vier undefined/inválido)
-            const taxa = Number(taxaEntrega);
-            valorTotalCalculado += Number.isFinite(taxa) ? taxa : 0;
+            // 6. Adiciona taxa de entrega do cardápio ativo
+            valorTotalCalculado += taxaEntrega;
 
             if (!Number.isFinite(valorTotalCalculado)) {
                 throw new Error("Falha ao calcular o valor total do pedido.");
@@ -303,9 +306,8 @@ class PedidoController {
                 throw new Error("Pedido não encontrado.");
             }
 
-            // 2. Busca a taxa de entrega nas configurações
-            const config = await Config.findOne();
-            const taxaEntrega = config ? config.taxaEntrega : 0;
+            // 2. Taxa de entrega registrada no pedido (dia ou noite, conforme o cardápio da época)
+            const taxaEntrega = Number(pedido.taxaEntrega) || 0;
 
             // 3. Reconstrói o array 'produtosPedido' no formato esperado pela função de impressão
             const produtosPedido = pedido.itensPedido.map(item => {

@@ -223,6 +223,23 @@ export function estabelecimentoAbertoAgora(
   return diaEstaAtendendo(normalizeHorarioDia(raw), agora);
 }
 
+/** Cardápio que aceita pedidos agora (Almoço tem prioridade se houver sobreposição). */
+export function resolverTipoMenuAtivo(
+  horarios: HorarioDia[] | undefined | null,
+  defaults: PeriodosCardapio = DEFAULT_PERIODOS_CARDAPIO,
+  agora = new Date()
+): 'dia' | 'noite' | null {
+  const { dayOfWeek, minutesOfDay } = getBrasiliaParts(agora);
+  const raw = Array.isArray(horarios) ? horarios.find((h) => h.dia === dayOfWeek) : undefined;
+  const hoje = normalizeHorarioDia(raw || { dia: dayOfWeek, aberto: true }, defaults);
+  if (!hoje.aberto || !hoje.periodos) return null;
+
+  const { dia, noite } = hoje.periodos;
+  if (dia.ativo && estaNoIntervalo(minutesOfDay, dia.inicio, dia.fim)) return 'dia';
+  if (noite.ativo && estaNoIntervalo(minutesOfDay, noite.inicio, noite.fim)) return 'noite';
+  return null;
+}
+
 export function formatDuration(inicio: string, fim: string): string {
   const a = parseHoraParaMinutos(inicio);
   const b = parseHoraParaMinutos(fim);

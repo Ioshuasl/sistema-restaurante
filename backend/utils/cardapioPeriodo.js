@@ -247,6 +247,17 @@ export function pertenceAoMenu(tipoMenu, tipoSolicitado) {
 }
 
 /**
+ * @param {{ taxaEntregaDia?: number | string, taxaEntregaNoite?: number | string } | null | undefined} config
+ * @param {TipoMenuAtivo} tipoAtivo
+ * @returns {number}
+ */
+export function resolverTaxaEntrega(config, tipoAtivo) {
+    const valor = tipoAtivo === 'noite' ? config?.taxaEntregaNoite : config?.taxaEntregaDia;
+    const taxa = Number(valor);
+    return Number.isFinite(taxa) && taxa > 0 ? taxa : 0;
+}
+
+/**
  * @param {TipoMenu | null | undefined} tipoMenu
  * @param {TipoMenuAtivo | null} tipoAtivo
  */

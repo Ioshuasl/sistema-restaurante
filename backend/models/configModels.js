@@ -70,10 +70,17 @@ const Config = sequelize.define('config', {
         allowNull: false,
         validate: { isEmail: { msg: "E-mail inválido." } }
     },
-    taxaEntrega: {
+    taxaEntregaDia: {
         type: DataTypes.DECIMAL(10, 2),
         allowNull: false,
-        defaultValue: 0.00
+        defaultValue: 0.00,
+        comment: "Taxa de entrega do cardápio do dia (almoço)"
+    },
+    taxaEntregaNoite: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: false,
+        defaultValue: 0.00,
+        comment: "Taxa de entrega do cardápio da noite (jantar)"
     },
     tipoChavePix: {
         type: DataTypes.ENUM('cpf', 'cnpj', 'email', 'telefone', 'aleatoria'),

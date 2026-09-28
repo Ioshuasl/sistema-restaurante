@@ -16,6 +16,7 @@ import { getConfig } from '../../../services/configService';
 import { getAllFormasPagamento } from '../../../services/formaPagamentoService';
 import { createPedido } from '../../../services/pedidoService';
 import { normalizeImageUrl } from '../../../utils/normalizeImageUrl';
+import { resolverTipoMenuAtivo } from '../../../utils/horariosCardapio';
 
 type Props = {
     cart: CartItem[];
@@ -58,6 +59,7 @@ export default function Checkout({ cart, onBack, onConfirm, onIncrease, onDecrea
     const [payment, setPayment] = useState<number | ''>('');
     const [paymentMethods, setPaymentMethods] = useState<FormaPagamento[]>([]);
     const [taxaEntrega, setTaxaEntrega] = useState<number>(0);
+    const [tipoMenuAtivo, setTipoMenuAtivo] = useState<'dia' | 'noite' | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [itemToEdit, setItemToEdit] = useState<CartItem | null>(null);
@@ -106,7 +108,10 @@ export default function Checkout({ cart, onBack, onConfirm, onIncrease, onDecrea
                     getConfig(),
                     getAllFormasPagamento(),
                 ]);
-                setTaxaEntrega(Number(config.taxaEntrega || 0));
+                const tipo = resolverTipoMenuAtivo(config.horariosFuncionamento, config.periodosCardapio);
+                const taxa = Number(tipo === 'noite' ? config.taxaEntregaNoite : config.taxaEntregaDia);
+                setTipoMenuAtivo(tipo);
+                setTaxaEntrega(Number.isFinite(taxa) ? taxa : 0);
                 setPaymentMethods(methods);
             } catch (error) {
                 console.error("Erro ao carregar dados iniciais:", error);
@@ -249,7 +254,6 @@ export default function Checkout({ cart, onBack, onConfirm, onIncrease, onDecrea
                 formaPagamento_id: Number(payment),
                 situacaoPedido: 'preparando',
                 isRetiradaEstabelecimento: retiradaLocal,
-                taxaEntrega: retiradaLocal ? 0 : taxaEntrega,
                 nomeCliente: name,
                 telefoneCliente: telefone,
                 cepCliente: retiradaLocal ? "" : cep,
@@ -499,7 +503,12 @@ export default function Checkout({ cart, onBack, onConfirm, onIncrease, onDecrea
                                 </div>
                                 {!retiradaLocal && (
                                     <div className="flex justify-between text-slate-500 dark:text-slate-400 font-bold text-sm transition-colors">
-                                        <span>Taxa de Entrega</span>
+                                        <span>
+                                            Taxa de Entrega
+                                            {tipoMenuAtivo && (
+                                                <span className="font-medium"> ({tipoMenuAtivo === 'noite' ? 'Jantar' : 'Almoço'})</span>
+                                            )}
+                                        </span>
                                         <span>R$ {taxaEntrega.toFixed(2).replace('.', ',')}</span>
                                     </div>
                                 )}
