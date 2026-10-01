@@ -120,8 +120,10 @@ export default function Config({ isDarkMode, toggleTheme }: { isDarkMode: boolea
                     ...c,
                     taxaEntregaDia: formatTaxa(c.taxaEntregaDia),
                     taxaEntregaNoite: formatTaxa(c.taxaEntregaNoite),
-                    tipoChavePix: c.tipoChavePix || 'cnpj',
-                    chavePix: c.chavePix || ''
+                    tipoChavePixDia: c.tipoChavePixDia || 'cnpj',
+                    chavePixDia: c.chavePixDia || '',
+                    tipoChavePixNoite: c.tipoChavePixNoite || 'cnpj',
+                    chavePixNoite: c.chavePixNoite || ''
                 });
                 setTimeout(() => { isFirstLoad.current = false; }, 1000);
             } catch (error) { 

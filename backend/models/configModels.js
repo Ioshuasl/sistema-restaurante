@@ -82,6 +82,7 @@ const Config = sequelize.define('config', {
         defaultValue: 0.00,
         comment: "Taxa de entrega do cardápio da noite (jantar)"
     },
+    // Legado: substituído pelas chaves por cardápio (Dia/Noite); mantido para compatibilidade de deploy
     tipoChavePix: {
         type: DataTypes.ENUM('cpf', 'cnpj', 'email', 'telefone', 'aleatoria'),
         allowNull: true,
@@ -91,6 +92,30 @@ const Config = sequelize.define('config', {
         type: DataTypes.STRING,
         allowNull: true,
         defaultValue: ''
+    },
+    tipoChavePixDia: {
+        type: DataTypes.ENUM('cpf', 'cnpj', 'email', 'telefone', 'aleatoria'),
+        allowNull: true,
+        defaultValue: 'cnpj',
+        comment: "Tipo da chave PIX do cardápio do dia (almoço)"
+    },
+    chavePixDia: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: '',
+        comment: "Chave PIX do cardápio do dia (almoço)"
+    },
+    tipoChavePixNoite: {
+        type: DataTypes.ENUM('cpf', 'cnpj', 'email', 'telefone', 'aleatoria'),
+        allowNull: true,
+        defaultValue: 'cnpj',
+        comment: "Tipo da chave PIX do cardápio da noite (jantar)"
+    },
+    chavePixNoite: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: '',
+        comment: "Chave PIX do cardápio da noite (jantar)"
     },
     evolutionInstanceName: {
         type: DataTypes.STRING,

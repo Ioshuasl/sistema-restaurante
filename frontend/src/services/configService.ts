@@ -40,8 +40,10 @@ const CONFIG_UPDATE_KEYS: (keyof UpdateConfigPayload)[] = [
   'nomeImpressora',
   'horariosFuncionamento',
   'periodosCardapio',
-  'tipoChavePix',
-  'chavePix',
+  'tipoChavePixDia',
+  'chavePixDia',
+  'tipoChavePixNoite',
+  'chavePixNoite',
 ];
 
 export const updateConfig = async (payload: UpdateConfigPayload): Promise<Config> => {

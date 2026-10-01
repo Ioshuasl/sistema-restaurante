@@ -7,6 +7,7 @@ import { sendToAutomaticPrint } from '../functions/automatic-print.js';
 import {
     resolverTipoMenuAtivo,
     resolverTaxaEntrega,
+    resolverChavePix,
     podePedirNoPeriodo,
 } from '../utils/cardapioPeriodo.js';
 
@@ -242,11 +243,13 @@ class PedidoController {
                     ];
 
                     // Se a forma de pagamento for PIX (id = 2)
-                    if (formaPagamento_id === 2) {
+                    // A chave enviada depende do cardápio ativo (dia/noite)
+                    const pix = formaPagamento_id === 2 ? resolverChavePix(config, tipoAtivo) : null;
+                    if (pix) {
                         mensagens.push(
                             `💳 *Pagamento via PIX*`,
-                            `Tipo de chave: ${config.tipoChavePix}`,
-                            `Chave PIX: ${config.chavePix}`,
+                            `Tipo de chave: ${pix.tipo}`,
+                            `Chave PIX: ${pix.chave}`,
                             `Após o pagamento, envie o comprovante. ✅`
                         );
                     }

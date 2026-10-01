@@ -90,8 +90,13 @@ export const updateConfigSchema = yup.object({
       .required(),
   }),
 
-  tipoChavePix: yup
+  tipoChavePixDia: yup
     .string()
     .oneOf(['cpf', 'cnpj', 'email', 'telefone', 'aleatoria']),
-  chavePix: yup.string().nullable(),
+  chavePixDia: yup.string().nullable(),
+
+  tipoChavePixNoite: yup
+    .string()
+    .oneOf(['cpf', 'cnpj', 'email', 'telefone', 'aleatoria']),
+  chavePixNoite: yup.string().nullable(),
 });

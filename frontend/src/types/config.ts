@@ -1,3 +1,5 @@
+export type TipoChavePix = 'cpf' | 'cnpj' | 'email' | 'telefone' | 'aleatoria';
+
 // types/config.ts
 
 export interface PeriodoCardapio {
@@ -71,8 +73,10 @@ export interface Config {
   /** Defaults / template; horários efetivos ficam em horariosFuncionamento[].periodos */
   periodosCardapio?: PeriodosCardapio;
 
-  tipoChavePix?: 'cpf' | 'cnpj' | 'email' | 'telefone' | 'aleatoria';
-  chavePix?: string;
+  tipoChavePixDia?: TipoChavePix;
+  chavePixDia?: string;
+  tipoChavePixNoite?: TipoChavePix;
+  chavePixNoite?: string;
 }
 
 export interface UpdateConfigPayload {
@@ -104,6 +108,8 @@ export interface UpdateConfigPayload {
   horariosFuncionamento?: HorarioDia[];
   periodosCardapio?: PeriodosCardapio;
 
-  tipoChavePix?: 'cpf' | 'cnpj' | 'email' | 'telefone' | 'aleatoria';
-  chavePix?: string;
+  tipoChavePixDia?: TipoChavePix;
+  chavePixDia?: string;
+  tipoChavePixNoite?: TipoChavePix;
+  chavePixNoite?: string;
 }

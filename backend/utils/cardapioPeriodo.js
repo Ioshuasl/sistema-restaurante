@@ -258,6 +258,20 @@ export function resolverTaxaEntrega(config, tipoAtivo) {
 }
 
 /**
+ * Chave PIX do cardápio ativo. Se estiver vazia, usa a do outro cardápio.
+ * @param {any} config
+ * @param {TipoMenuAtivo} tipoAtivo
+ * @returns {{ tipo: string, chave: string } | null}
+ */
+export function resolverChavePix(config, tipoAtivo) {
+    const dia = { tipo: config?.tipoChavePixDia, chave: String(config?.chavePixDia ?? '').trim() };
+    const noite = { tipo: config?.tipoChavePixNoite, chave: String(config?.chavePixNoite ?? '').trim() };
+    const [principal, reserva] = tipoAtivo === 'noite' ? [noite, dia] : [dia, noite];
+    const escolhida = principal.chave ? principal : reserva.chave ? reserva : null;
+    return escolhida ? { tipo: escolhida.tipo, chave: escolhida.chave } : null;
+}
+
+/**
  * @param {TipoMenu | null | undefined} tipoMenu
  * @param {TipoMenuAtivo | null} tipoAtivo
  */
