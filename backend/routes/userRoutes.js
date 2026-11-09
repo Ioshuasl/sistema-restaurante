@@ -4,6 +4,10 @@ import cors from "cors"
 import { isAdmin, authenticateToken } from '../middlewares/authMiddleware.js'
 import { validate } from "../middlewares/validationMiddleware.js";
 import { loginSchema, createUserSchema, updateUserSchema } from '../validators/userValidator.js'
+import { rateLimit } from '../middlewares/rateLimit.js'
+
+// Anti força-bruta: 10 tentativas de login / 15 min por IP
+const loginLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10, message: 'Muitas tentativas de login. Aguarde alguns minutos.' })
 
 const userRoutes = express.Router()
 
@@ -11,7 +15,7 @@ const userRoutes = express.Router()
 userRoutes.use(cors())
 
 // Rota para processar o login
-userRoutes.post('/login', validate(loginSchema), async (req, res) => {
+userRoutes.post('/login', loginLimiter, validate(loginSchema), async (req, res) => {
     const { username, password } = req.body; // Obtém os dados do formulário
 
     try {

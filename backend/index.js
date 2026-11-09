@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import sequelize from "./config/database.js";
 import "./models/index.js";
 import apiRoutes from "./routes/index.js";
+import { rateLimit } from "./middlewares/rateLimit.js";
 
 dotenv.config();
 
@@ -27,7 +28,8 @@ app.use('/uploads', express.static('public/uploads', {
 }));
 
 // Prefixando todas as rotas da API com /api de uma só vez
-app.use('/api', apiRoutes);
+// Limite geral por IP (o webhook da Evolution vem do próprio servidor e é autenticado por segredo)
+app.use('/api', rateLimit({ windowMs: 60 * 1000, max: 600 }), apiRoutes);
 
 // Conexão com o banco (schema via Sequelize CLI: migrations/seeders)
 try {
