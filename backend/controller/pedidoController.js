@@ -573,13 +573,14 @@ class PedidoController {
 
                     const telefoneFormatado = formatTelefone(pedido.telefoneCliente); //
 
-                    await sendMessageWhatsapp(
+                    // Fire-and-forget: a fila de envio já faz retry; não prende a resposta HTTP do painel
+                    sendMessageWhatsapp(
                         process.env.EVOLUTION_API_URL,
                         config.evolutionInstanceName,
                         process.env.EVOLUTION_API_KEY,
                         telefoneFormatado,
                         mensagens
-                    );
+                    ).catch(err => console.error("Erro ao enviar WhatsApp de tempo de espera:", err.message));
                 }
             } catch (whatsappError) {
                 console.error("Erro ao enviar WhatsApp de tempo de espera:", whatsappError.message);
@@ -668,7 +669,11 @@ class PedidoController {
                                 telefoneFormatado,
                                 mensagens
                             )
-                            .then(() => {console.log(`Notificação enviada para pedido #${pedido.id} (Status: ${pedido.situacaoPedido})`);})
+                            .then(({ enviadas, falhas }) => {
+                                if (falhas > 0) console.error(`Notificação do pedido #${pedido.id} (${pedido.situacaoPedido}): ${falhas} mensagem(ns) NÃO enviada(s).`);
+                                else console.log(`Notificação enviada para pedido #${pedido.id} (Status: ${pedido.situacaoPedido}, ${enviadas} msg)`);
+                            })
+                            .catch(err => console.error(`Erro ao notificar pedido #${pedido.id}:`, err.message));
                             
                         }
                     }
