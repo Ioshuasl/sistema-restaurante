@@ -1,6 +1,7 @@
 // controller/webhookController.js
 import WhatsappCliente from '../models/whatsappClienteModel.js';
 import { sendMessageWhatsapp } from '../functions/sendMessageWhatsapp.js';
+import { resolveLid } from '../functions/wahaClient.js';
 import Config from '../models/configModels.js';
 
 import {
@@ -18,7 +19,7 @@ const estaNoHorarioAtendimento = (horarios) => {
 const dataHojeBrasilia = () =>
   new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
 
-/** Idade máxima (s) para responder uma mensagem. A Evolution 2.3.7 (Baileys rc.9) entrega mensagens em rajadas atrasadas. */
+/** Idade máxima (s) para responder uma mensagem (após reconexão a sessão pode entregar mensagens atrasadas em rajada). */
 const maxMessageAgeSec = () => {
   const v = parseInt(process.env.WHATSAPP_MAX_MESSAGE_AGE_SEC, 10);
   return Number.isFinite(v) ? v : 3600;
@@ -26,11 +27,14 @@ const maxMessageAgeSec = () => {
 
 /** Tipos de evento que não são uma mensagem do cliente e nunca devem disparar resposta automática. */
 const IGNORED_MESSAGE_TYPES = new Set([
-  'protocolMessage',
-  'senderKeyDistributionMessage',
-  'reactionMessage',
-  'editedMessage',
-  'pollUpdateMessage',
+  'protocol',
+  'e2e_notification',
+  'notification_template',
+  'gp2',
+  'call_log',
+  'revoked',
+  'reaction',
+  'poll_vote',
 ]);
 
 /** Evita processar duas vezes a mesma mensagem (retry do webhook) e corridas por número. */
@@ -51,54 +55,57 @@ const jaProcessada = (id) => {
 };
 
 /**
- * Extrai o número de telefone. Contas migradas para LID chegam como "<id>@lid";
- * o telefone real vem em remoteJidAlt / senderPn.
+ * Extrai o número de telefone do chatId da WAHA. "5562...@c.us" → "5562...".
+ * Contas migradas para LID chegam como "<id>@lid": tenta resolver o telefone pela WAHA e,
+ * se não souber, devolve o JID completo (a WAHA aceita @lid como chatId).
  */
-const resolverNumero = (messageData, data) => {
-  const key = messageData.key || {};
-  const candidatos = [key.remoteJid, key.remoteJidAlt, key.senderPn, messageData.senderPn, data?.senderPn];
-  const pn = candidatos.find((j) => typeof j === 'string' && j.endsWith('@s.whatsapp.net'));
-  if (pn) return pn.replace('@s.whatsapp.net', '');
-  // Sem telefone conhecido: devolve o JID completo (a Evolution aceita @lid em number)
-  return key.remoteJid || null;
+const resolverNumero = async (session, from) => {
+  if (typeof from !== 'string') return null;
+  if (from.endsWith('@c.us')) return from.replace('@c.us', '');
+  if (from.endsWith('@lid')) {
+    const pn = await resolveLid(session, from);
+    return pn ? pn.replace('@c.us', '') : from;
+  }
+  return null;
 };
 
 const processarMensagem = async (body) => {
-  const { data, event, instance } = body || {};
+  const { event, session } = body || {};
 
-  // Evolution envia "messages.upsert" (legado) ou "MESSAGES_UPSERT" (v2)
-  const normalizedEvent = String(event || '').trim().toLowerCase().replace(/_/g, '.');
-  if (normalizedEvent !== 'messages.upsert') return;
+  if (String(event || '').trim().toLowerCase() !== 'message') return;
 
-  const messageData = data?.data || data;
-  if (!messageData || !messageData.key) return;
+  const config = await Config.findOne({ where: { id: 1 } });
+  if (!config || !config.evolutionInstanceName) {
+    console.error('❌ ERRO: Configuração de sessão WhatsApp ausente no banco.');
+    return;
+  }
+  // Ignora eventos de qualquer outra sessão do mesmo servidor WAHA
+  if (session !== config.evolutionInstanceName) return;
 
-  const remoteJid = messageData.key.remoteJid;
-  if (typeof remoteJid !== 'string') return;
+  const msg = body.payload;
+  if (!msg || typeof msg.from !== 'string') return;
 
-  const isFromMe = messageData.key.fromMe;
-  const isGroup = remoteJid.includes('@g.us');
-  const isBroadcast = remoteJid.includes('@broadcast') || remoteJid.includes('@newsletter');
-  if (isFromMe || isGroup || isBroadcast) return;
+  // Só conversas individuais: ignora grupos, status, canais e mensagens enviadas por nós.
+  if (msg.fromMe || msg.from.endsWith('@g.us') || msg.from.includes('@broadcast') || msg.from.endsWith('@newsletter')) return;
 
-  if (IGNORED_MESSAGE_TYPES.has(messageData.messageType)) return;
-  if (jaProcessada(messageData.key.id)) {
-    console.log(`♻️ Mensagem ${messageData.key.id} já processada, ignorando.`);
+  if (IGNORED_MESSAGE_TYPES.has(msg._data?.type)) return;
+  if (jaProcessada(msg.id)) {
+    console.log(`♻️ Mensagem ${msg.id} já processada, ignorando.`);
     return;
   }
 
   // Mensagem antiga (entrega em rajada após reconexão): não responder, evita spam fora de hora.
-  const ts = Number(messageData.messageTimestamp?.low ?? messageData.messageTimestamp);
+  const ts = Number(msg.timestamp);
   if (Number.isFinite(ts) && ts > 0) {
     const idadeSec = Math.floor(Date.now() / 1000) - ts;
     if (idadeSec > maxMessageAgeSec()) {
-      console.log(`⌛ Mensagem de ${Math.round(idadeSec / 60)} min atrás ignorada (instância ${instance}).`);
+      console.log(`⌛ Mensagem de ${Math.round(idadeSec / 60)} min atrás ignorada (sessão ${session}).`);
       return;
     }
   }
 
-  const pushName = messageData.pushName || data?.pushName || null;
-  const numero = resolverNumero(messageData, data);
+  const pushName = msg._data?.notifyName || null;
+  const numero = await resolverNumero(session, msg.from);
   if (!numero) return;
 
   if (inFlightNumbers.has(numero)) return;
@@ -122,12 +129,6 @@ const processarMensagem = async (body) => {
     }
 
     if (!enviarResposta) return;
-
-    const config = await Config.findOne({ where: { id: 1 } });
-    if (!config || !config.evolutionInstanceName) {
-      console.error('❌ ERRO: Configuração de instância ausente no banco.');
-      return;
-    }
 
     const abertoAgora = estaNoHorarioAtendimento(config.horariosFuncionamento);
     let mensagensParaEnviar = [];
@@ -165,9 +166,7 @@ const processarMensagem = async (body) => {
     }
 
     const { enviadas, falhas } = await sendMessageWhatsapp(
-      process.env.EVOLUTION_API_URL,
       config.evolutionInstanceName,
-      process.env.EVOLUTION_API_KEY,
       numero,
       mensagensParaEnviar
     );
@@ -185,8 +184,8 @@ const processarMensagem = async (body) => {
 };
 
 export const handleIncomingMessage = (req, res) => {
-  // Responde na hora: o envio humanizado leva dezenas de segundos e a Evolution
-  // reenviaria o webhook (duplicando respostas) se esperássemos terminar.
+  // Responde na hora: o envio humanizado leva dezenas de segundos e a WAHA
+  // reenviaria (política de retry) o webhook (duplicando respostas) se esperássemos terminar.
   res.status(200).json({ status: 'received' });
 
   processarMensagem(req.body).catch((error) => {

@@ -11,6 +11,7 @@ import uploadRoutes from './uploadRoutes.js';
 import dashboardRoutes from './dashboardRoutes.js';
 import subProdutoRoutes from './subProdutoRoutes.js';
 import webhookRoutes from './webhookRoutes.js';
+import whatsappRoutes from './whatsappRoutes.js';
 
 const router = Router();
 
@@ -27,5 +28,6 @@ router.use(uploadRoutes);
 router.use(dashboardRoutes);
 router.use(subProdutoRoutes);
 router.use('/webhook', webhookRoutes);
+router.use('/whatsapp', whatsappRoutes);
 
 export default router;

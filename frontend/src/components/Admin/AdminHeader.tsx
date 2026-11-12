@@ -22,14 +22,12 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({
   const [waStatus, setWaStatus] = useState<'open' | 'close' | 'error' | 'loading'>('loading');
   const [instanceName, setInstanceName] = useState<string | null>(null);
 
-  const checkWhatsAppStatus = useCallback(async (name: string) => {
+  const checkWhatsAppStatus = useCallback(async (_name: string) => {
     try {
-      const response = await connectionState({
-        instanceName: name,
-      });
+      const response = await connectionState();
 
-      if (response && response.instance) {
-        setWaStatus(response.instance.state as any);
+      if (response) {
+        setWaStatus(response.state === 'open' ? 'open' : 'close');
       } else {
         setWaStatus('close');
       }

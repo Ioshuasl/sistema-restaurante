@@ -1,5 +1,3 @@
-import axios from 'axios';
-
 export const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export function randomBetween(min, max) {
@@ -58,39 +56,3 @@ export function typingDurationMs(text, cfg) {
   return Math.min(cfg.typingMsMax, Math.max(cfg.typingMsMin, raw));
 }
 
-/**
- * POST /chat/sendPresence/{instance} (Evolution API v1/v2).
- * @returns {Promise<boolean>} true se a requisição completou (o tempo de “digitando” pode ser no servidor ou imediato).
- */
-export async function sendTypingPresence(url, instanceName, apikey, numero, delayMs) {
-  const base = String(url).replace(/\/$/, '');
-  const endpoint = `${base}/chat/sendPresence/${instanceName}`;
-  const delay = Math.min(60000, Math.max(500, Math.round(delayMs)));
-
-  try {
-    await axios.post(
-      endpoint,
-      {
-        number: numero,
-        options: {
-          delay,
-          presence: 'composing',
-        },
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          apikey,
-        },
-        timeout: delay + 15000,
-      }
-    );
-    return true;
-  } catch (err) {
-    console.warn(
-      '[whatsapp] sendPresence indisponível ou erro:',
-      err.response?.status ?? err.message
-    );
-    return false;
-  }
-}

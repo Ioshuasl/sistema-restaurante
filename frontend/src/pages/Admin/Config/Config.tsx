@@ -153,27 +153,31 @@ export default function Config({ isDarkMode, toggleTheme }: { isDarkMode: boolea
 
     const handleConnectWhatsapp = async () => {
         if (!configData.evolutionInstanceName) {
-            toast.warning("Informe o nome da instância primeiro.");
+            toast.warning("Informe o nome da sessão primeiro.");
             return;
         }
         setIsConnectingWhatsapp(true);
         setQrCodeBase64(null);
         setIsQrModalOpen(true);
-        
-        try {
-            const connection = await connectInstance({
-                instanceName: configData.evolutionInstanceName,
-            });
 
-            if (connection?.base64) {
-                setQrCodeBase64(connection.base64);
+        try {
+            // O backend usa a sessão salva na configuração (autosave de 1,5s): aguarda para não usar valor antigo.
+            await new Promise((r) => setTimeout(r, 2000));
+            const connection = await connectInstance();
+
+            if (!connection) {
+                setIsQrModalOpen(false);
+                toast.error("Erro na comunicação com o servidor de WhatsApp");
+            } else if (connection.qr) {
+                setQrCodeBase64(connection.qr);
             } else {
                 setIsQrModalOpen(false);
-                toast.info("Instância já conectada ou conectada em outro aparelho.");
+                if (connection.state === 'open') toast.info("WhatsApp já está conectado.");
+                else toast.warning("Não foi possível gerar o QR Code. Tente novamente em instantes.");
             }
         } catch (error) {
             setIsQrModalOpen(false);
-            toast.error("Erro na comunicação com Evolution API");
+            toast.error("Erro na comunicação com o servidor de WhatsApp");
         } finally {
             setIsConnectingWhatsapp(false);
         }

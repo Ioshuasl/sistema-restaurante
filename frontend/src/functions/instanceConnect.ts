@@ -1,95 +1,38 @@
+import api from "../services/api";
 
-import axios, { AxiosError } from "axios";
-
-interface EvolutionInstanceConnection {
-  pairingCode: string | null;
-  code: string;
-  base64: string; 
-  count: number;
+export interface WhatsappConnectResult {
+  state: "open" | "connecting" | "close";
+  status: string;
+  /** QR code como data URI (png), presente enquanto a sessão aguarda leitura. */
+  qr: string | null;
 }
 
-export interface EvolutionConnectionState {
-  instance: {
-    instanceName: string;
-    state: string;
-  }
-}
-
-export interface EvolutionConnectionParams {
-  serverUrl?: string;
-  instanceName: string;
-  apikey?: string;
-}
-
-const DEFAULT_EVOLUTION_SERVER_URL = import.meta.env.VITE_EVOLUTION_API_URL || "";
-const DEFAULT_EVOLUTION_API_KEY = import.meta.env.VITE_EVOLUTION_API_KEY || "";
-
-/**
- * Conecta uma instância gerando um QR Code (Base64)
- */
-export async function connectInstance(
-  params: EvolutionConnectionParams
-): Promise<EvolutionInstanceConnection | null> {
-  const { instanceName } = params;
-  const serverUrl = params.serverUrl || DEFAULT_EVOLUTION_SERVER_URL;
-  const apikey = params.apikey || DEFAULT_EVOLUTION_API_KEY;
-
-  if (!serverUrl || !serverUrl.startsWith("http")) {
-    console.error("URL do servidor inválida.");
-    return null;
-  }
-  if (!instanceName) return null;
-
-  const endpoint = `${serverUrl}/instance/connect/${instanceName}`;
-
-  try {
-    const response = await axios.get<EvolutionInstanceConnection>(endpoint, {
-      headers: {
-        "apikey": apikey,
-        "Content-Type": "application/json",
-      },
-    });
-    return response.data;
-  } catch (error: unknown) {
-    if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError;
-      console.error("Erro Evolution API (Connect):", axiosError.response?.data || axiosError.message);
-    }
-    return null;
-  }
+export interface WhatsappStatus {
+  state: "open" | "connecting" | "close";
+  status: string;
 }
 
 /**
- * Verifica o estado atual da conexão da instância (open, close, connecting, etc)
+ * Inicia a sessão do WhatsApp no servidor e devolve o QR Code para leitura.
+ * (As chamadas à WAHA passam pelo backend: a chave de API não fica exposta no navegador.)
  */
-export async function connectionState(
-  params: EvolutionConnectionParams
-): Promise<EvolutionConnectionState | null> {
-  const { instanceName } = params;
-  const serverUrl = params.serverUrl || DEFAULT_EVOLUTION_SERVER_URL;
-  const apikey = params.apikey || DEFAULT_EVOLUTION_API_KEY;
-
-  if (!serverUrl || !serverUrl.startsWith("http")) {
-    console.error("URL do servidor inválida.");
+export async function connectInstance(): Promise<WhatsappConnectResult | null> {
+  try {
+    const { data } = await api.post<WhatsappConnectResult>("/whatsapp/connect", undefined, { timeout: 40000 });
+    return data;
+  } catch (error) {
+    console.error("Erro ao conectar WhatsApp:", error);
     return null;
   }
-  if (!instanceName) return null;
+}
 
-  const endpoint = `${serverUrl}/instance/connectionState/${instanceName}`;
-
+/** Estado atual da conexão (open / connecting / close). */
+export async function connectionState(): Promise<WhatsappStatus | null> {
   try {
-    const response = await axios.get<EvolutionConnectionState>(endpoint, {
-      headers: {
-        "apikey": apikey,
-        "Content-Type": "application/json",
-      },
-    });
-    return response.data;
-  } catch (error: unknown) {
-    if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError;
-      console.error("Erro Evolution API (State):", axiosError.response?.data || axiosError.message);
-    }
+    const { data } = await api.get<WhatsappStatus>("/whatsapp/status");
+    return data;
+  } catch (error) {
+    console.error("Erro ao consultar status do WhatsApp:", error);
     return null;
   }
 }

@@ -230,11 +230,11 @@ class PedidoController {
 
             // 9. Envia mensagem no whatsapp do cliente para confirmação do pedido
             try {
-                // Buscar a configuração para pegar o nome da instância Evolution API
+                // Buscar a configuração para pegar o nome da sessão WAHA (campo evolutionInstanceName, nome legado)
                 const config = await Config.findOne({ where: { id: 1 } }); // ajuste o id conforme seu caso
 
                 if (!config || !config.evolutionInstanceName) {
-                    console.warn("Configuração da Evolution API não encontrada. Mensagem WhatsApp não será enviada.");
+                    console.warn("Sessão do WhatsApp (WAHA) não configurada. Mensagem WhatsApp não será enviada.");
                 } else {
                     // Montar mensagem para o cliente
                     const mensagens = [
@@ -260,9 +260,7 @@ class PedidoController {
 
                     // Enviar mensagem
                     sendMessageWhatsapp(
-                        process.env.EVOLUTION_API_URL,
                         config.evolutionInstanceName,
-                        process.env.EVOLUTION_API_KEY,
                         telefoneFormatado,
                         mensagens
                     )
@@ -575,9 +573,7 @@ class PedidoController {
 
                     // Fire-and-forget: a fila de envio já faz retry; não prende a resposta HTTP do painel
                     sendMessageWhatsapp(
-                        process.env.EVOLUTION_API_URL,
                         config.evolutionInstanceName,
-                        process.env.EVOLUTION_API_KEY,
                         telefoneFormatado,
                         mensagens
                     ).catch(err => console.error("Erro ao enviar WhatsApp de tempo de espera:", err.message));
@@ -663,9 +659,7 @@ class PedidoController {
                             const telefoneFormatado = formatTelefone(pedido.telefoneCliente);
 
                             sendMessageWhatsapp(
-                                process.env.EVOLUTION_API_URL,
                                 config.evolutionInstanceName,
-                                process.env.EVOLUTION_API_KEY,
                                 telefoneFormatado,
                                 mensagens
                             )

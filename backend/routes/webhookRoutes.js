@@ -6,8 +6,8 @@ import { handleIncomingMessage } from '../controller/webhookController.js';
 const router = express.Router();
 
 /**
- * Autenticação do webhook: a Evolution deve enviar o header `x-webhook-secret`
- * com o valor de WEBHOOK_SECRET (configurado em /webhook/set → headers).
+ * Autenticação do webhook: a WAHA deve enviar o header `x-webhook-secret`
+ * com o valor de WEBHOOK_SECRET (session config → webhooks[].customHeaders).
  * Sem isso, qualquer pessoa na internet pode forjar eventos e disparar mensagens
  * de WhatsApp pelo seu número.
  */
@@ -27,7 +27,7 @@ const verifyWebhookSecret = (req, res, next) => {
   next();
 };
 
-// Rota POST que a Evolution API vai chamar
+// Rota POST que a WAHA vai chamar
 router.post('/whatsapp', verifyWebhookSecret, handleIncomingMessage);
 
 export default router;

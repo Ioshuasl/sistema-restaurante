@@ -19,12 +19,8 @@ COPY . .
 # Variáveis de build do Vite (injetadas pelo Easypanel via .env ou build args)
 ARG VITE_BACKEND_API_URL
 ARG VITE_UPLOADS_BASE_URL
-ARG VITE_EVOLUTION_API_URL
-ARG VITE_EVOLUTION_API_KEY
 ENV VITE_BACKEND_API_URL=$VITE_BACKEND_API_URL
 ENV VITE_UPLOADS_BASE_URL=$VITE_UPLOADS_BASE_URL
-ENV VITE_EVOLUTION_API_URL=$VITE_EVOLUTION_API_URL
-ENV VITE_EVOLUTION_API_KEY=$VITE_EVOLUTION_API_KEY
 
 # Executa o comando de build definido no package.json.
 # Isso irá compilar o TypeScript e gerar os arquivos estáticos na pasta /dist.

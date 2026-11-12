@@ -1,22 +1,21 @@
-import axios from "axios";
 import {
   randomBetween,
   resolveWhatsappHumanizedConfig,
-  sendTypingPresence,
   sleep,
   typingDurationMs,
 } from "./whatsappHumanized.js";
+import { sendText, startTyping, stopTyping, wahaConfigured } from "./wahaClient.js";
 
 const intEnv = (name, fallback) => {
   const v = parseInt(process.env[name], 10);
   return Number.isFinite(v) ? v : fallback;
 };
 
-/** Timeout de cada chamada à Evolution (antes não havia: uma sessão travada pendurava o envio para sempre). */
+/** Timeout de cada chamada à WAHA (uma sessão travada não pode pendurar o envio para sempre). */
 const SEND_TIMEOUT_MS = () => intEnv("WHATSAPP_SEND_TIMEOUT_MS", 30000);
 /** Tentativas por mensagem (1 + retries). */
 const SEND_ATTEMPTS = () => Math.max(1, intEnv("WHATSAPP_SEND_ATTEMPTS", 4));
-/** Conversas simultâneas (evita enfileirar 20 pedidos de uma vez no mesmo socket Baileys). */
+/** Conversas simultâneas (evita enfileirar 20 pedidos de uma vez na mesma sessão). */
 const MAX_CONCURRENCY = () => Math.max(1, intEnv("WHATSAPP_MAX_CONCURRENCY", 3));
 
 // ---------------------------------------------------------------------------
@@ -74,16 +73,13 @@ function isRetryable(error) {
   return status === 408 || status === 429 || status >= 500;
 }
 
-async function postWithRetry(endpoint, body, apikey) {
+async function sendWithRetry(session, numero, text) {
   const attempts = SEND_ATTEMPTS();
   let lastError;
 
   for (let attempt = 1; attempt <= attempts; attempt++) {
     try {
-      return await axios.post(endpoint, body, {
-        headers: { "Content-Type": "application/json", apikey },
-        timeout: SEND_TIMEOUT_MS(),
-      });
+      return await sendText(session, numero, text, SEND_TIMEOUT_MS());
     } catch (error) {
       lastError = error;
       if (attempt === attempts || !isRetryable(error)) break;
@@ -99,41 +95,31 @@ async function postWithRetry(endpoint, body, apikey) {
 }
 
 /**
- * Envia mensagens via Evolution API com ritmo humanizado (leitura, lotes, jitter, “digitando”).
+ * Envia mensagens via WAHA com ritmo humanizado (leitura, lotes, jitter, “digitando”).
  *
  * - Serializa por destinatário e limita conversas simultâneas (WHATSAPP_MAX_CONCURRENCY).
  * - Timeout por chamada + retry com backoff em erros transitórios.
  * - Nunca lança: retorna { enviadas, falhas } para o chamador decidir o que fazer.
  *
- * @param {string} url
- * @param {string} instanceName
- * @param {string} apikey
- * @param {string} numero
+ * @param {string} session Nome da sessão WAHA (ex.: "gssabores")
+ * @param {string} numero Telefone com DDI ("5562...") ou JID completo
  * @param {string[]} mensagens
  * @param {number | Record<string, number | boolean> | null | undefined} humanizedInput
  *        Número = piso do intervalo entre mensagens (comportamento legado, ex.: 2000).
  *        Objeto = sobrescreve opções (mesmas chaves de getDefaultHumanizedWhatsappConfig).
  * @returns {Promise<{ enviadas: number, falhas: number }>}
  */
-export async function sendMessageWhatsapp(
-  url,
-  instanceName,
-  apikey,
-  numero,
-  mensagens,
-  humanizedInput
-) {
+export async function sendMessageWhatsapp(session, numero, mensagens, humanizedInput) {
   if (!Array.isArray(mensagens) || mensagens.length === 0) {
     console.error("O parâmetro 'mensagens' deve ser um array com pelo menos uma mensagem.");
     return { enviadas: 0, falhas: 0 };
   }
-  if (!url || !apikey || !instanceName || !numero) {
-    console.error("[whatsapp] parâmetros ausentes (url/apikey/instância/número); envio abortado.");
+  if (!wahaConfigured() || !session || !numero) {
+    console.error("[whatsapp] WAHA_API_URL/WAHA_API_KEY, sessão ou número ausentes; envio abortado.");
     return { enviadas: 0, falhas: mensagens.length };
   }
 
   return schedule(numero, async () => {
-    const endpoint = `${String(url).replace(/\/$/, "")}/message/sendText/${instanceName}`;
     const cfg = resolveWhatsappHumanizedConfig(humanizedInput);
     let enviadas = 0;
     let falhas = 0;
@@ -152,13 +138,15 @@ export async function sendMessageWhatsapp(
         }
 
         const typingMs = typingDurationMs(message, cfg);
-        const t0 = Date.now();
+        let typing = false;
         if (cfg.useTypingPresence) {
-          await sendTypingPresence(url, instanceName, apikey, numero, typingMs);
+          // "Digitando..." é cosmético: falha aqui nunca impede o envio.
+          typing = await startTyping(session, numero).then(() => true, () => false);
         }
-        await sleep(Math.max(0, typingMs - (Date.now() - t0)));
+        await sleep(typingMs);
+        if (typing) await stopTyping(session, numero).catch(() => {});
 
-        await postWithRetry(endpoint, { number: numero, text: message }, apikey);
+        await sendWithRetry(session, numero, message);
         enviadas++;
 
         if (cfg.postSendJitterMsMax > 0) {

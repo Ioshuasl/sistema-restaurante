@@ -17,7 +17,7 @@ export default function WhatsAppTab({ data, onChange, onConnect, isConnecting, i
       <div className="bg-green-50 dark:bg-green-950/20 p-6 rounded-3xl border border-green-100 dark:border-green-900/30 flex items-start gap-4">
         <MessageSquare className="text-green-500 shrink-0" size={24} />
         <div>
-          <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100">WhatsApp Evolution API</h4>
+          <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100">WhatsApp (WAHA)</h4>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Conecte seu WhatsApp para enviar notificações automáticas de pedidos aos clientes em tempo real.
           </p>
@@ -26,12 +26,12 @@ export default function WhatsAppTab({ data, onChange, onConnect, isConnecting, i
       
       <div className="space-y-6">
         <div>
-          <label className={labelClasses}>Nome da Instância</label>
+          <label className={labelClasses}>Nome da Sessão</label>
           <input 
             className={inputClasses} 
             value={data.evolutionInstanceName || ''} 
             onChange={e => onChange('evolutionInstanceName', e.target.value)} 
-            placeholder="Ex: gs_sabores_01" 
+            placeholder="Ex: gssabores"
           />
           <p className="text-[9px] text-slate-400 mt-2 ml-1 uppercase font-bold tracking-tight">
             * Use apenas letras, números e underscores.
