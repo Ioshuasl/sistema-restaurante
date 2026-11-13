@@ -31,7 +31,17 @@ export function toChatId(numero) {
   return `${s.replace(/\D/g, "")}@c.us`;
 }
 
-export const sendText = (session, numero, text, timeout) =>
+/**
+ * Resolve um telefone no WhatsApp: { numberExists, chatId }. O chatId devolvido (frequentemente "@lid")
+ * é o único que o WEBJS aceita para números ainda não mapeados; sem isso o envio falha com "No LID for user".
+ */
+export const checkExists = (session, phone) =>
+  wahaRequest("get", "/api/contacts/check-exists", {
+    params: { phone: String(phone).replace(/\D/g, ""), session },
+    timeout: 20000,
+  });
+
+export const sendText =(session, numero, text, timeout) =>
   wahaRequest("post", "/api/sendText", {
     data: { session, chatId: toChatId(numero), text },
     timeout,

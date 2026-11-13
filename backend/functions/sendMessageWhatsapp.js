@@ -4,7 +4,7 @@ import {
   sleep,
   typingDurationMs,
 } from "./whatsappHumanized.js";
-import { sendText, startTyping, stopTyping, wahaConfigured } from "./wahaClient.js";
+import { checkExists, sendText, startTyping, stopTyping, wahaConfigured } from "./wahaClient.js";
 import logger, { maskPhone } from "../utils/logger.js";
 import WhatsappMensagemLog from "../models/whatsappMensagemLogModel.js";
 
@@ -70,6 +70,8 @@ function schedule(numero, task) {
 // POST com timeout + retry/backoff
 // ---------------------------------------------------------------------------
 function isRetryable(error) {
+  // Erro permanente do WhatsApp Web: repetir só prende uma vaga de envio e atrasa os outros clientes.
+  if (JSON.stringify(error.response?.data ?? "").includes("No LID for user")) return false;
   const status = error.response?.status;
   if (!status) return true; // timeout / rede / socket
   return status === 408 || status === 429 || status >= 500;
@@ -144,6 +146,26 @@ export async function sendMessageWhatsapp(session, numero, mensagens, humanizedI
     let enviadas = 0;
     let falhas = 0;
 
+    // Resolve o telefone no WhatsApp uma vez por conversa. O chatId devolvido (muitas vezes "@lid")
+    // evita o erro "No LID for user"; número inexistente falha na hora, sem gastar tentativas.
+    let destino = numero;
+    if (!String(numero).includes("@")) {
+      try {
+        const existe = await checkExists(session, numero);
+        if (existe?.numberExists === false) {
+          logger.error({ event: "whatsapp.send.not_on_whatsapp", to: maskPhone(numero), tipo, pedidoId, total: mensagens.length }, "número não está no WhatsApp; mensagens não enviadas");
+          mensagens.forEach((_, i) =>
+            registrarEnvio({ sessao: session, numero: String(numero), tipo, pedidoId, ordem: i, status: "falha", tentativas: 0, erro: "numero_nao_existe_no_whatsapp" })
+          );
+          return { enviadas: 0, falhas: mensagens.length };
+        }
+        if (existe?.chatId) destino = existe.chatId;
+      } catch (error) {
+        // Verificação é uma otimização: se falhar, tenta o envio normal com o número original.
+        logger.warn({ event: "whatsapp.check_exists.failed", to: maskPhone(numero), status: error.response?.status, err: error.message }, "não foi possível verificar o número; usando o telefone direto");
+      }
+    }
+
     for (let i = 0; i < mensagens.length; i++) {
       const message = mensagens[i];
       const inicio = Date.now();
@@ -162,13 +184,13 @@ export async function sendMessageWhatsapp(session, numero, mensagens, humanizedI
         let typing = false;
         if (cfg.useTypingPresence) {
           // "Digitando..." é cosmético: falha aqui nunca impede o envio.
-          typing = await startTyping(session, numero).then(() => true, () => false);
+          typing = await startTyping(session, destino).then(() => true, () => false);
         }
         await sleep(typingMs);
-        if (typing) await stopTyping(session, numero).catch(() => {});
+        if (typing) await stopTyping(session, destino).catch(() => {});
 
         const envioInicio = Date.now();
-        const tentativas = await sendWithRetry(session, numero, message);
+        const tentativas = await sendWithRetry(session, destino, message);
         enviadas++;
         const latenciaMs = Date.now() - envioInicio;
         logger.info({ event: "whatsapp.send.ok", to: maskPhone(numero), tipo, pedidoId, ordem: i, total: mensagens.length, tentativas, latenciaMs }, "mensagem enviada");
