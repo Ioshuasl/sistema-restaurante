@@ -262,7 +262,9 @@ class PedidoController {
                     sendMessageWhatsapp(
                         config.evolutionInstanceName,
                         telefoneFormatado,
-                        mensagens
+                        mensagens,
+                        undefined,
+                        { tipo: 'confirmacao_pedido', pedidoId: pedido.id }
                     )
                         .then(() => {
                             console.log(`Mensagem WhatsApp enviada para o cliente ${telefoneCliente} sobre o pedido #${pedido.id}`);
@@ -575,7 +577,9 @@ class PedidoController {
                     sendMessageWhatsapp(
                         config.evolutionInstanceName,
                         telefoneFormatado,
-                        mensagens
+                        mensagens,
+                        undefined,
+                        { tipo: 'tempo_espera', pedidoId: pedido.id }
                     ).catch(err => console.error("Erro ao enviar WhatsApp de tempo de espera:", err.message));
                 }
             } catch (whatsappError) {
@@ -661,7 +665,9 @@ class PedidoController {
                             sendMessageWhatsapp(
                                 config.evolutionInstanceName,
                                 telefoneFormatado,
-                                mensagens
+                                mensagens,
+                                undefined,
+                                { tipo: 'status_pedido', pedidoId: pedido.id }
                             )
                             .then(({ enviadas, falhas }) => {
                                 if (falhas > 0) console.error(`Notificação do pedido #${pedido.id} (${pedido.situacaoPedido}): ${falhas} mensagem(ns) NÃO enviada(s).`);

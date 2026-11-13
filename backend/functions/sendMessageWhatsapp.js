@@ -5,6 +5,8 @@ import {
   typingDurationMs,
 } from "./whatsappHumanized.js";
 import { sendText, startTyping, stopTyping, wahaConfigured } from "./wahaClient.js";
+import logger, { maskPhone } from "../utils/logger.js";
+import WhatsappMensagemLog from "../models/whatsappMensagemLogModel.js";
 
 const intEnv = (name, fallback) => {
   const v = parseInt(process.env[name], 10);
@@ -73,25 +75,35 @@ function isRetryable(error) {
   return status === 408 || status === 429 || status >= 500;
 }
 
+/** Envia com retry; devolve o nº de tentativas usadas (e anexa em error.attempts quando falha). */
 async function sendWithRetry(session, numero, text) {
   const attempts = SEND_ATTEMPTS();
   let lastError;
 
   for (let attempt = 1; attempt <= attempts; attempt++) {
     try {
-      return await sendText(session, numero, text, SEND_TIMEOUT_MS());
+      await sendText(session, numero, text, SEND_TIMEOUT_MS());
+      return attempt;
     } catch (error) {
       lastError = error;
+      error.attempts = attempt;
       if (attempt === attempts || !isRetryable(error)) break;
       const backoff = Math.min(60000, 3000 * 2 ** (attempt - 1)) + randomBetween(0, 1000);
-      console.warn(
-        `[whatsapp] falha ao enviar (tentativa ${attempt}/${attempts}): ` +
-          `${error.response?.status ?? error.code ?? error.message}. Nova tentativa em ${backoff}ms`
+      logger.warn(
+        { event: "whatsapp.send.retry", to: maskPhone(numero), attempt, attempts, backoffMs: backoff, status: error.response?.status ?? error.code ?? error.message },
+        "falha ao enviar mensagem; nova tentativa agendada"
       );
       await sleep(backoff);
     }
   }
   throw lastError;
+}
+
+/** Grava o resultado no banco sem nunca atrapalhar (nem atrasar) o envio. */
+function registrarEnvio(dados) {
+  WhatsappMensagemLog.create(dados).catch((err) =>
+    logger.error({ event: "whatsapp.log.persist_failed", err: err.message }, "não foi possível gravar o log da mensagem")
+  );
 }
 
 /**
@@ -107,15 +119,23 @@ async function sendWithRetry(session, numero, text) {
  * @param {number | Record<string, number | boolean> | null | undefined} humanizedInput
  *        Número = piso do intervalo entre mensagens (comportamento legado, ex.: 2000).
  *        Objeto = sobrescreve opções (mesmas chaves de getDefaultHumanizedWhatsappConfig).
+ * @param {{ tipo?: string, pedidoId?: number | null }} [meta] Contexto gravado no log
+ *        (tipo: confirmacao_pedido | status_pedido | tempo_espera | resposta_automatica).
  * @returns {Promise<{ enviadas: number, falhas: number }>}
  */
-export async function sendMessageWhatsapp(session, numero, mensagens, humanizedInput) {
+export async function sendMessageWhatsapp(session, numero, mensagens, humanizedInput, meta = {}) {
+  const tipo = meta.tipo || "outro";
+  const pedidoId = meta.pedidoId ?? null;
+
   if (!Array.isArray(mensagens) || mensagens.length === 0) {
-    console.error("O parâmetro 'mensagens' deve ser um array com pelo menos uma mensagem.");
+    logger.error({ event: "whatsapp.send.invalid" }, "o parâmetro mensagens deve ser um array com pelo menos uma mensagem");
     return { enviadas: 0, falhas: 0 };
   }
   if (!wahaConfigured() || !session || !numero) {
-    console.error("[whatsapp] WAHA_API_URL/WAHA_API_KEY, sessão ou número ausentes; envio abortado.");
+    logger.error({ event: "whatsapp.send.misconfigured", session, tipo }, "WAHA_API_URL/WAHA_API_KEY, sessão ou número ausentes; envio abortado");
+    mensagens.forEach((_, i) =>
+      registrarEnvio({ sessao: session || "-", numero: String(numero || "-"), tipo, pedidoId, ordem: i, status: "falha", tentativas: 0, erro: "configuração ausente (WAHA/sessão/número)" })
+    );
     return { enviadas: 0, falhas: mensagens.length };
   }
 
@@ -126,6 +146,7 @@ export async function sendMessageWhatsapp(session, numero, mensagens, humanizedI
 
     for (let i = 0; i < mensagens.length; i++) {
       const message = mensagens[i];
+      const inicio = Date.now();
 
       try {
         if (i === 0) {
@@ -146,18 +167,24 @@ export async function sendMessageWhatsapp(session, numero, mensagens, humanizedI
         await sleep(typingMs);
         if (typing) await stopTyping(session, numero).catch(() => {});
 
-        await sendWithRetry(session, numero, message);
+        const envioInicio = Date.now();
+        const tentativas = await sendWithRetry(session, numero, message);
         enviadas++;
+        const latenciaMs = Date.now() - envioInicio;
+        logger.info({ event: "whatsapp.send.ok", to: maskPhone(numero), tipo, pedidoId, ordem: i, total: mensagens.length, tentativas, latenciaMs }, "mensagem enviada");
+        registrarEnvio({ sessao: session, numero: String(numero), tipo, pedidoId, ordem: i, status: "enviada", tentativas, latenciaMs });
 
         if (cfg.postSendJitterMsMax > 0) {
           await sleep(randomBetween(0, cfg.postSendJitterMsMax));
         }
       } catch (error) {
         falhas++;
-        console.error(
-          `❌ Erro ao enviar a mensagem ${i + 1}/${mensagens.length} para ${numero}:`,
-          error.response?.data || error.message
+        const detalhe = error.response?.data ? JSON.stringify(error.response.data).slice(0, 500) : error.message;
+        logger.error(
+          { event: "whatsapp.send.failed", to: maskPhone(numero), tipo, pedidoId, ordem: i, total: mensagens.length, tentativas: error.attempts ?? 1, status: error.response?.status, detalhe, elapsedMs: Date.now() - inicio },
+          "falha ao enviar mensagem"
         );
+        registrarEnvio({ sessao: session, numero: String(numero), tipo, pedidoId, ordem: i, status: "falha", tentativas: error.attempts ?? 1, erro: String(detalhe).slice(0, 1000) });
       }
     }
 

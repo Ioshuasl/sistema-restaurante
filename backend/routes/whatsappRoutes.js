@@ -9,6 +9,8 @@ import {
   wahaConfigured,
 } from '../functions/wahaClient.js';
 import { setNoCache } from '../middlewares/cacheHeaders.js';
+import logger from '../utils/logger.js';
+import WhatsappMensagemLog from '../models/whatsappMensagemLogModel.js';
 
 const router = express.Router();
 
@@ -32,7 +34,7 @@ const handle = (fn) => async (req, res) => {
     return await fn(session, req, res);
   } catch (error) {
     if (error.response?.status === 404) return res.status(200).json({ session: null, state: 'close', status: 'NOT_FOUND' });
-    console.error('[whatsapp] erro WAHA:', error.response?.data || error.message);
+    logger.error({ event: 'whatsapp.waha_error', path: req.path, status: error.response?.status, detalhe: error.response?.data || error.message }, 'erro ao falar com a WAHA');
     return res.status(502).json({ message: 'Falha ao comunicar com o servidor de WhatsApp.' });
   }
 };
@@ -74,6 +76,22 @@ router.get('/qr', authenticateToken, isAdmin, setNoCache, handle(async (session,
   const qr = s.status === 'SCAN_QR_CODE' ? await getQrDataUri(session) : null;
   res.json({ session, state: toState(s.status), status: s.status, qr });
 }));
+
+// Histórico dos últimos envios (filtros: status=enviada|falha, tipo, pedidoId, limit até 200)
+router.get('/mensagens', authenticateToken, isAdmin, setNoCache, async (req, res) => {
+  try {
+    const where = {};
+    if (['enviada', 'falha'].includes(req.query.status)) where.status = req.query.status;
+    if (req.query.tipo) where.tipo = String(req.query.tipo);
+    if (req.query.pedidoId) where.pedidoId = Number(req.query.pedidoId) || null;
+    const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 200);
+    const rows = await WhatsappMensagemLog.findAll({ where, order: [['id', 'DESC']], limit });
+    res.json(rows);
+  } catch (error) {
+    logger.error({ event: 'whatsapp.log.query_failed', err: error }, 'erro ao consultar log de mensagens');
+    res.status(500).json({ message: 'Erro ao consultar o log de mensagens.' });
+  }
+});
 
 // Desconecta o aparelho (a sessão continua existindo)
 router.post('/logout', authenticateToken, isAdmin, setNoCache, handle(async (session, req, res) => {

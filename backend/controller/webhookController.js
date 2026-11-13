@@ -2,6 +2,7 @@
 import WhatsappCliente from '../models/whatsappClienteModel.js';
 import { sendMessageWhatsapp } from '../functions/sendMessageWhatsapp.js';
 import { resolveLid } from '../functions/wahaClient.js';
+import logger, { maskPhone } from '../utils/logger.js';
 import Config from '../models/configModels.js';
 
 import {
@@ -76,11 +77,14 @@ const processarMensagem = async (body) => {
 
   const config = await Config.findOne({ where: { id: 1 } });
   if (!config || !config.evolutionInstanceName) {
-    console.error('❌ ERRO: Configuração de sessão WhatsApp ausente no banco.');
+    logger.error({ event: 'webhook.no_session_config' }, 'configuração de sessão WhatsApp ausente no banco');
     return;
   }
   // Ignora eventos de qualquer outra sessão do mesmo servidor WAHA
-  if (session !== config.evolutionInstanceName) return;
+  if (session !== config.evolutionInstanceName) {
+    logger.debug({ event: 'webhook.ignored', reason: 'other_session', session }, 'evento de outra sessão ignorado');
+    return;
+  }
 
   const msg = body.payload;
   if (!msg || typeof msg.from !== 'string') return;
@@ -90,7 +94,7 @@ const processarMensagem = async (body) => {
 
   if (IGNORED_MESSAGE_TYPES.has(msg._data?.type)) return;
   if (jaProcessada(msg.id)) {
-    console.log(`♻️ Mensagem ${msg.id} já processada, ignorando.`);
+    logger.info({ event: 'webhook.ignored', reason: 'duplicate', msgId: msg.id }, 'mensagem já processada');
     return;
   }
 
@@ -99,7 +103,7 @@ const processarMensagem = async (body) => {
   if (Number.isFinite(ts) && ts > 0) {
     const idadeSec = Math.floor(Date.now() / 1000) - ts;
     if (idadeSec > maxMessageAgeSec()) {
-      console.log(`⌛ Mensagem de ${Math.round(idadeSec / 60)} min atrás ignorada (sessão ${session}).`);
+      logger.info({ event: 'webhook.ignored', reason: 'too_old', ageMin: Math.round(idadeSec / 60), session }, 'mensagem antiga ignorada');
       return;
     }
   }
@@ -113,7 +117,7 @@ const processarMensagem = async (body) => {
 
   try {
     const hoje = dataHojeBrasilia();
-    console.log(`🔎 Cliente: ${numero} | Nome: ${pushName || 'Desconhecido'}`);
+    logger.info({ event: 'webhook.message', from: maskPhone(numero), msgId: msg.id, type: msg._data?.type }, 'mensagem recebida');
 
     let cliente = await WhatsappCliente.findOne({ where: { numero } });
     let enviarResposta = false;
@@ -125,7 +129,7 @@ const processarMensagem = async (body) => {
       await cliente.update({ ultima_interacao: hoje, nome: pushName || cliente.nome });
       enviarResposta = true;
     } else {
-      console.log('⏳ Cliente já interagiu hoje.');
+      logger.info({ event: 'webhook.ignored', reason: 'already_replied_today', from: maskPhone(numero) }, 'cliente já recebeu resposta hoje');
     }
 
     if (!enviarResposta) return;
@@ -139,7 +143,7 @@ const processarMensagem = async (body) => {
         `${saudacao} Tudo bem?`,
         `Para realizar seu pedido, acesse nosso cardápio digital no link: ${process.env.FRONTEND_URL || 'https://gs-sabores.ioshuavps.com.br'}`,
       ];
-      console.log(`🚀 Enviando CARDÁPIO para ${cliente.nome || numero}...`);
+      logger.info({ event: 'webhook.reply', kind: 'cardapio', to: maskPhone(numero) }, 'enviando link do cardápio');
     } else {
       const diasNomes = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
 
@@ -162,21 +166,23 @@ const processarMensagem = async (body) => {
         `Desculpe, no momento não estamos em horário de atendimento.`,
         `Estes são nossos horários de funcionamento:\n\n${listaHorarios}`,
       ];
-      console.log(`🌙 Enviando AVISO DE FECHADO para ${cliente.nome || numero}...`);
+      logger.info({ event: 'webhook.reply', kind: 'fechado', to: maskPhone(numero) }, 'enviando aviso de fechado');
     }
 
     const { enviadas, falhas } = await sendMessageWhatsapp(
       config.evolutionInstanceName,
       numero,
-      mensagensParaEnviar
+      mensagensParaEnviar,
+      undefined,
+      { tipo: 'resposta_automatica' }
     );
 
     if (falhas > 0 && enviadas === 0) {
       // Nada foi entregue: libera o "já respondi hoje" para a próxima mensagem do cliente tentar de novo.
       await cliente.update({ ultima_interacao: '1970-01-01' }).catch(() => {});
-      console.error(`❌ Resposta automática NÃO enviada para ${numero}.`);
+      logger.error({ event: 'webhook.reply_failed', to: maskPhone(numero), falhas }, 'resposta automática não enviada');
     } else {
-      console.log(`✅ Resposta enviada (${enviadas}/${mensagensParaEnviar.length}) para ${numero}.`);
+      logger.info({ event: 'webhook.reply_sent', to: maskPhone(numero), enviadas, total: mensagensParaEnviar.length }, 'resposta automática enviada');
     }
   } finally {
     inFlightNumbers.delete(numero);
@@ -189,6 +195,6 @@ export const handleIncomingMessage = (req, res) => {
   res.status(200).json({ status: 'received' });
 
   processarMensagem(req.body).catch((error) => {
-    console.error('❌ ERRO WEBHOOK:', error);
+    logger.error({ event: 'webhook.error', err: error }, 'erro ao processar webhook');
   });
 };
