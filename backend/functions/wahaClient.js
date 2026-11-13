@@ -9,7 +9,7 @@ const baseUrl = () => String(process.env.WAHA_API_URL || "").replace(/\/$/, "");
 
 export const wahaConfigured = () => Boolean(baseUrl() && process.env.WAHA_API_KEY);
 
-export async function wahaRequest(method, path, { data, params, timeout = 30000 } = {}) {
+export async function wahaRequest(method, path, { data, params, timeout = 30000, headers = {} } = {}) {
   if (!wahaConfigured()) {
     throw new Error("WAHA_API_URL / WAHA_API_KEY não configurados.");
   }
@@ -19,7 +19,7 @@ export async function wahaRequest(method, path, { data, params, timeout = 30000 
     data,
     params,
     timeout,
-    headers: { "X-Api-Key": process.env.WAHA_API_KEY, "Content-Type": "application/json" },
+    headers: { "X-Api-Key": process.env.WAHA_API_KEY, "Content-Type": "application/json", ...headers },
   });
   return response.data;
 }
@@ -55,7 +55,11 @@ export const logoutSession = (session) =>
 /** QR como data URI (png) ou null se a sessão não estiver aguardando leitura. */
 export async function getQrDataUri(session) {
   try {
-    const qr = await wahaRequest("get", `/api/${encodeURIComponent(session)}/auth/qr`, { timeout: 15000 });
+    // Sem "Accept: application/json" a WAHA devolve a imagem binária em vez do JSON {mimetype, data}.
+    const qr = await wahaRequest("get", `/api/${encodeURIComponent(session)}/auth/qr`, {
+      timeout: 15000,
+      headers: { Accept: "application/json" },
+    });
     if (!qr?.data) return null;
     return `data:${qr.mimetype || "image/png"};base64,${qr.data}`;
   } catch (error) {
