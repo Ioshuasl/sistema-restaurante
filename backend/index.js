@@ -4,6 +4,7 @@ import cors from "cors";
 import compression from "compression";
 import dotenv from 'dotenv';
 import pinoHttp from "pino-http";
+import { migrateOnBoot } from "./utils/migrateOnBoot.js";
 import { randomUUID } from "node:crypto";
 import sequelize from "./config/database.js";
 import "./models/index.js";
@@ -55,6 +56,9 @@ app.use('/uploads', express.static('public/uploads', {
 // Prefixando todas as rotas da API com /api de uma só vez
 // Limite geral por IP (o webhook da Evolution vem do próprio servidor e é autenticado por segredo)
 app.use('/api', rateLimit({ windowMs: 60 * 1000, max: 600 }), apiRoutes);
+
+// Migrations pendentes (opt-in via RUN_MIGRATIONS_ON_BOOT=true; com trava de segurança)
+await migrateOnBoot();
 
 // Conexão com o banco (schema via Sequelize CLI: migrations/seeders)
 try {
