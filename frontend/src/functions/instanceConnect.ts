@@ -26,6 +26,17 @@ export async function connectInstance(): Promise<WhatsappConnectResult | null> {
   }
 }
 
+/** QR atualizado (o do WhatsApp expira em segundos) + estado; null em caso de erro de rede. */
+export async function refreshQr(): Promise<WhatsappConnectResult | null> {
+  try {
+    const { data } = await api.get<WhatsappConnectResult>("/whatsapp/qr", { timeout: 20000 });
+    return data;
+  } catch (error) {
+    console.error("Erro ao renovar QR do WhatsApp:", error);
+    return null;
+  }
+}
+
 /** Estado atual da conexão (open / connecting / close). */
 export async function connectionState(): Promise<WhatsappStatus | null> {
   try {

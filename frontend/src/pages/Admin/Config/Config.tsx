@@ -15,7 +15,7 @@ import ImpressaoTab from "../../../components/Admin/Config/ImpressaoTab";
 import HorariosTab from "../../../components/Admin/Config/HorariosTab";
 import FinanceiroTab from "../../../components/Admin/Config/FinanceiroTab";
 import WhatsAppQrModal from "../../../components/Admin/Config/WhatsAppQrModal";
-import { connectInstance } from "../../../functions/instanceConnect";
+import { connectInstance, refreshQr } from "../../../functions/instanceConnect";
 import { toast } from "react-toastify";
 import axios from "axios";
 
@@ -150,6 +150,26 @@ export default function Config({ isDarkMode, toggleTheme }: { isDarkMode: boolea
     const handleChange = (field: string, value: any) => {
         setConfigData((prev: any) => ({ ...prev, [field]: value }));
     };
+
+    // O QR do WhatsApp expira em segundos: enquanto o modal estiver aberto, renova a imagem
+    // a cada 8s e fecha sozinho quando o aparelho terminar de parear.
+    const hasQr = qrCodeBase64 !== null;
+    useEffect(() => {
+        if (!isQrModalOpen || !hasQr) return;
+        let cancelled = false;
+        const timer = window.setInterval(async () => {
+            const result = await refreshQr();
+            if (cancelled || !result) return;
+            if (result.state === 'open') {
+                setIsQrModalOpen(false);
+                setQrCodeBase64(null);
+                toast.success("WhatsApp conectado com sucesso!");
+            } else if (result.qr) {
+                setQrCodeBase64(result.qr);
+            }
+        }, 8000);
+        return () => { cancelled = true; window.clearInterval(timer); };
+    }, [isQrModalOpen, hasQr]);
 
     const handleConnectWhatsapp = async () => {
         if (!configData.evolutionInstanceName) {

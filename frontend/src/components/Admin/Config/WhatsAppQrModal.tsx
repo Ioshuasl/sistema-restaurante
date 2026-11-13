@@ -25,6 +25,10 @@ export default function WhatsAppQrModal({ isOpen, onClose, qrCodeBase64 }: Whats
         <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 mb-2 tracking-tight">Conectar WhatsApp</h3>
         <p className="text-[10px] text-slate-400 mb-8 uppercase font-black tracking-widest">Abra o WhatsApp - Aparelhos Conectados</p>
         
+        <p className="text-[10px] text-slate-400 -mt-5 mb-6 font-bold">
+          O QR Code é renovado automaticamente. Escaneie sempre o que está na tela.
+        </p>
+
         <div className="aspect-square bg-white p-4 rounded-[2rem] mb-8 shadow-inner flex items-center justify-center border-2 border-slate-100 dark:border-slate-800">
           {qrCodeBase64 ? (
             <img src={qrCodeBase64} alt="WhatsApp QR Code" className="w-full h-full" />

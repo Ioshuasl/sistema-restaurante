@@ -63,6 +63,18 @@ router.post('/connect', authenticateToken, isAdmin, setNoCache, handle(async (se
   res.json({ session, state: toState(s.status), status: s.status, qr });
 }));
 
+// Consulta rápida usada pelo modal para renovar o QR (expira em segundos) e detectar a conexão.
+// Se a sessão estiver parada, inicia; o QR só vem quando ela já aguarda leitura.
+router.get('/qr', authenticateToken, isAdmin, setNoCache, handle(async (session, req, res) => {
+  let s = await getSession(session);
+  if (s.status === 'STOPPED' || s.status === 'FAILED') {
+    await startSession(session);
+    s = await getSession(session);
+  }
+  const qr = s.status === 'SCAN_QR_CODE' ? await getQrDataUri(session) : null;
+  res.json({ session, state: toState(s.status), status: s.status, qr });
+}));
+
 // Desconecta o aparelho (a sessão continua existindo)
 router.post('/logout', authenticateToken, isAdmin, setNoCache, handle(async (session, req, res) => {
   await logoutSession(session);
