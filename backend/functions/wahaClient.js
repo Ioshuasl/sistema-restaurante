@@ -59,6 +59,10 @@ export const getSession = (session) =>
 export const startSession = (session) =>
   wahaRequest("post", `/api/sessions/${encodeURIComponent(session)}/start`, { timeout: 30000 });
 
+/** Reinicia uma sessão (necessário quando está FAILED; "start" só vale para sessões paradas). */
+export const restartSession = (session) =>
+  wahaRequest("post", `/api/sessions/${encodeURIComponent(session)}/restart`, { timeout: 30000 });
+
 export const logoutSession = (session) =>
   wahaRequest("post", `/api/sessions/${encodeURIComponent(session)}/logout`, { timeout: 30000 });
 

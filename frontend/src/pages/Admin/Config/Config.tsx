@@ -50,6 +50,7 @@ export default function Config({ isDarkMode, toggleTheme }: { isDarkMode: boolea
     // States para Componentes Modulares
     const [isQrModalOpen, setIsQrModalOpen] = useState(false);
     const [qrCodeBase64, setQrCodeBase64] = useState<string | null>(null);
+    const [qrPhase, setQrPhase] = useState<'starting' | 'qr' | 'pairing'>('starting');
     const [isConnectingWhatsapp, setIsConnectingWhatsapp] = useState(false);
     const [availablePrinters, setAvailablePrinters] = useState<string[]>([]);
     const [isSearchingPrinters, setIsSearchingPrinters] = useState(false);
@@ -151,11 +152,12 @@ export default function Config({ isDarkMode, toggleTheme }: { isDarkMode: boolea
         setConfigData((prev: any) => ({ ...prev, [field]: value }));
     };
 
-    // O QR do WhatsApp expira em segundos: enquanto o modal estiver aberto, renova a imagem
-    // a cada 8s e fecha sozinho quando o aparelho terminar de parear.
-    const hasQr = qrCodeBase64 !== null;
+    // O QR do WhatsApp expira em segundos: enquanto o modal mostra o QR, renova a imagem a cada 8s.
+    // Depois que o celular lê o QR a WAHA leva ~30s para concluir ("pairing"): o QR some, o modal avisa
+    // e continua consultando (a cada 4s) até a conexão fechar sozinha.
+    const pairingSince = useRef<number | null>(null);
     useEffect(() => {
-        if (!isQrModalOpen || !hasQr) return;
+        if (!isQrModalOpen || qrPhase === 'starting') return;
         let cancelled = false;
         const timer = window.setInterval(async () => {
             const result = await refreshQr();
@@ -164,12 +166,28 @@ export default function Config({ isDarkMode, toggleTheme }: { isDarkMode: boolea
                 setIsQrModalOpen(false);
                 setQrCodeBase64(null);
                 toast.success("WhatsApp conectado com sucesso!");
+            } else if (result.pairing) {
+                if (pairingSince.current === null) pairingSince.current = Date.now();
+                setQrCodeBase64(null);
+                setQrPhase('pairing');
+            } else if (
+                qrPhase === 'pairing' && result.state === 'connecting' &&
+                pairingSince.current !== null && Date.now() - pairingSince.current < 90000
+            ) {
+                // A WAHA fica alguns segundos sem informar o estado do motor durante o pareamento:
+                // mantém "Conectando..." em vez de voltar a mostrar o QR já usado (até 90s).
+            } else if (result.state === 'close') {
+                pairingSince.current = null;
+                setIsQrModalOpen(false);
+                toast.warning("A conexão com o WhatsApp foi interrompida. Clique em Conectar e tente novamente.");
             } else if (result.qr) {
+                pairingSince.current = null;
                 setQrCodeBase64(result.qr);
+                setQrPhase('qr');
             }
-        }, 8000);
+        }, qrPhase === 'pairing' ? 4000 : 8000);
         return () => { cancelled = true; window.clearInterval(timer); };
-    }, [isQrModalOpen, hasQr]);
+    }, [isQrModalOpen, qrPhase]);
 
     const handleConnectWhatsapp = async () => {
         if (!configData.evolutionInstanceName) {
@@ -178,6 +196,8 @@ export default function Config({ isDarkMode, toggleTheme }: { isDarkMode: boolea
         }
         setIsConnectingWhatsapp(true);
         setQrCodeBase64(null);
+        setQrPhase('starting');
+        pairingSince.current = null;
         setIsQrModalOpen(true);
 
         try {
@@ -188,8 +208,12 @@ export default function Config({ isDarkMode, toggleTheme }: { isDarkMode: boolea
             if (!connection) {
                 setIsQrModalOpen(false);
                 toast.error("Erro na comunicação com o servidor de WhatsApp");
+            } else if (connection.pairing) {
+                pairingSince.current = Date.now();
+                setQrPhase('pairing');
             } else if (connection.qr) {
                 setQrCodeBase64(connection.qr);
+                setQrPhase('qr');
             } else {
                 setIsQrModalOpen(false);
                 if (connection.state === 'open') toast.info("WhatsApp já está conectado.");
@@ -366,6 +390,7 @@ export default function Config({ isDarkMode, toggleTheme }: { isDarkMode: boolea
                 isOpen={isQrModalOpen} 
                 onClose={() => setIsQrModalOpen(false)} 
                 qrCodeBase64={qrCodeBase64} 
+                phase={qrPhase}
             />
 
             {/* Mantive o style caso precise de fallback local */}

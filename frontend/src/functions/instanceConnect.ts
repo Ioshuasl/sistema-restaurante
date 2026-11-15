@@ -3,6 +3,8 @@ import api from "../services/api";
 export interface WhatsappConnectResult {
   state: "open" | "connecting" | "close";
   status: string;
+  /** O celular já leu o QR e a WAHA está sincronizando (~30s): não exibir mais o QR. */
+  pairing?: boolean;
   /** QR code como data URI (png), presente enquanto a sessão aguarda leitura. */
   qr: string | null;
 }

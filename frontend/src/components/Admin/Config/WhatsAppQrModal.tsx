@@ -6,9 +6,11 @@ interface WhatsAppQrModalProps {
   isOpen: boolean;
   onClose: () => void;
   qrCodeBase64: string | null;
+  /** starting: iniciando o WhatsApp no servidor; qr: aguardando leitura; pairing: QR lido, sincronizando. */
+  phase?: 'starting' | 'qr' | 'pairing';
 }
 
-export default function WhatsAppQrModal({ isOpen, onClose, qrCodeBase64 }: WhatsAppQrModalProps) {
+export default function WhatsAppQrModal({ isOpen, onClose, qrCodeBase64, phase = 'starting' }: WhatsAppQrModalProps) {
   if (!isOpen) return null;
 
   return (
@@ -26,16 +28,27 @@ export default function WhatsAppQrModal({ isOpen, onClose, qrCodeBase64 }: Whats
         <p className="text-[10px] text-slate-400 mb-8 uppercase font-black tracking-widest">Abra o WhatsApp - Aparelhos Conectados</p>
         
         <p className="text-[10px] text-slate-400 -mt-5 mb-6 font-bold">
-          O QR Code é renovado automaticamente. Escaneie sempre o que está na tela.
+          {phase === 'pairing'
+            ? 'QR lido! Estamos concluindo a conexão.'
+            : 'O QR Code é renovado automaticamente. Escaneie sempre o que está na tela.'}
         </p>
 
         <div className="aspect-square bg-white p-4 rounded-[2rem] mb-8 shadow-inner flex items-center justify-center border-2 border-slate-100 dark:border-slate-800">
-          {qrCodeBase64 ? (
+          {phase === 'qr' && qrCodeBase64 ? (
             <img src={qrCodeBase64} alt="WhatsApp QR Code" className="w-full h-full" />
+          ) : phase === 'pairing' ? (
+            <div className="flex flex-col items-center gap-3 px-4">
+              <Loader2 className="animate-spin text-green-500" size={40} />
+              <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Conectando...</p>
+              <p className="text-[10px] font-bold text-slate-400 leading-snug">
+                Aguarde cerca de 30 segundos e não feche esta tela. Ela fecha sozinha quando concluir.
+              </p>
+            </div>
           ) : (
-            <div className="flex flex-col items-center gap-3">
+            <div className="flex flex-col items-center gap-3 px-4">
               <Loader2 className="animate-spin text-orange-500" size={40} />
-              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Gerando QR Code...</p>
+              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Iniciando o WhatsApp...</p>
+              <p className="text-[10px] font-bold text-slate-400 leading-snug">Pode levar até 25 segundos.</p>
             </div>
           )}
         </div>
