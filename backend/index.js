@@ -5,6 +5,7 @@ import compression from "compression";
 import dotenv from 'dotenv';
 import pinoHttp from "pino-http";
 import { migrateOnBoot } from "./utils/migrateOnBoot.js";
+import { startWhatsappWatchdog } from "./utils/sessionWatchdog.js";
 import { randomUUID } from "node:crypto";
 import sequelize from "./config/database.js";
 import "./models/index.js";
@@ -88,5 +89,6 @@ app.get('/', (req, res) => {
 });
 
 app.listen(PORT, () => {
+    startWhatsappWatchdog();
     console.log(`Servidor rodando na porta ${PORT}`);
 });

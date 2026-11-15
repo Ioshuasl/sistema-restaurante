@@ -3,6 +3,7 @@ import WhatsappCliente from '../models/whatsappClienteModel.js';
 import { sendMessageWhatsapp } from '../functions/sendMessageWhatsapp.js';
 import { resolveLid } from '../functions/wahaClient.js';
 import logger, { maskPhone } from '../utils/logger.js';
+import { pokeWatchdog } from '../utils/sessionWatchdog.js';
 import Config from '../models/configModels.js';
 
 import {
@@ -72,8 +73,18 @@ const resolverNumero = async (session, from) => {
 
 const processarMensagem = async (body) => {
   const { event, session } = body || {};
+  const evento = String(event || '').trim().toLowerCase();
 
-  if (String(event || '').trim().toLowerCase() !== 'message') return;
+  // Mudança de estado da sessão (WORKING, FAILED, STOPPED, SCAN_QR_CODE...): registra e antecipa o vigia.
+  if (evento === 'session.status') {
+    const status = body.payload?.status;
+    const nivel = status === 'WORKING' ? 'info' : 'warn';
+    logger[nivel]({ event: 'whatsapp.session.status', session, status }, `WAHA informou: sessão ${session} → ${status}`);
+    if (status && status !== 'WORKING') pokeWatchdog();
+    return;
+  }
+
+  if (evento !== 'message') return;
 
   const config = await Config.findOne({ where: { id: 1 } });
   if (!config || !config.evolutionInstanceName) {
